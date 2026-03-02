@@ -1,16 +1,39 @@
-# Amazon Quantum Ledger Database - QLDB
+## Amazon Quantum Ledger Database (QLDB)
 
-- Part of AWS Blockchain part of products
-- It as an immutable append-only ledger-only database
-- It provides a cryptographically verifiable transaction log
-- It is transparent: full history is always accessible
-- It is a serverless product, it provides Ledgers and Tables. We have no servers to manage
-- It is resilient through 3 AZs, replicates data within each of those AZs
-- It can stream data to Amazon Kinesis, it can stream any changes to data into Kinesis in real-time
-- It is a document database model, storing JSON documents (key-value pairs with a nested structure)
-- Provides ACID transactions
-- Use cases for QLDB:
-    - Anything related to finance: account balances and transactions
-    - Medical application: full history of data changes matters
-    - Logistics: track movement of objects
-    - Legal: track the usage and change of data (custody)
+* **AWS 관리형 원장(ledger) 데이터베이스 서비스**(블록체인 계열로 분류되지만, 퍼블릭 블록체인처럼 다자간 합의 네트워크를 구성하는 형태는 아님)
+* **불변(immutable)·추가 전용(append-only) 트랜잭션 로그(저널)**를 제공
+
+  * 데이터 변경 이력이 “삭제/수정”되는 게 아니라 **저널에 순차적으로 기록**됨
+* **암호학적으로 검증 가능한 변경 이력** 제공
+
+  * “특정 시점에 어떤 값이었는지”와 “그 이후 어떤 변경이 있었는지”를 **검증**할 수 있음
+* **투명성/감사(Audit) 지향**
+
+  * 전체 변경 이력을 조회할 수 있어 **감사 추적(audit trail)**, **규정 준수**에 강함
+* **서버리스(완전 관리형)**
+
+  * 사용자는 **Ledger / Table** 단위로 사용하고, 인프라 운영 부담이 적음
+* **고가용성/내구성**
+
+  * **멀티 AZ(3개 AZ) 복제**로 내구성과 가용성 확보(리전 내)
+* **실시간 변경 스트리밍**
+
+  * 변경 데이터를 **Amazon Kinesis로 스트리밍** 가능 → 실시간 분석/모니터링/파이프라인 연동에 유리
+* **문서형 모델(JSON 계열)**
+
+  * 중첩 구조를 포함한 **문서(document) 데이터** 저장에 적합
+* **ACID 트랜잭션 지원**
+
+  * 금융/정산처럼 **정합성**이 중요한 워크로드에 강점
+
+### 대표 사용 사례(암기 포인트)
+
+* **금융**: 계좌 잔액, 거래 원장, 정산 내역(감사·추적 필수)
+* **의료**: 진료/처방/기록 변경 이력의 무결성 및 추적
+* **물류**: 자산/물품 이동 이력(추적, 분쟁 대응)
+* **법률/컴플라이언스**: 증적(누가/언제/무엇을)·소유/보관(custody) 이력
+
+### 시험에서 자주 나오는 구분(짧게)
+
+* **“변경 이력 + 위·변조 검증 + 중앙화(단일 권한) + 운영 최소화”**가 핵심 요구면 → QLDB가 잘 맞습니다.
+* 반대로 **여러 조직 간 ‘신뢰 없는’ 합의(컨소시엄/퍼미션드 블록체인)**가 핵심이면 → 보통 다른 블록체인 계열(예: 관리형 블록체인) 쪽으로 문제가 유도됩니다.
