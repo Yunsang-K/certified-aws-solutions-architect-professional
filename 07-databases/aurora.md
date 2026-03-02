@@ -1,75 +1,106 @@
 ## Amazon Aurora
 
-## Aurora Architecture
+### Aurora 아키텍처
 
-- Aurora architecture is very different from RDS
-- It uses the base entity of a cluster, which something that other instances of RDS database do not have
-- Aurora does not use local storage for the compute instances, instead an Aurora cluster has a shared custom volume
-- A cluster is made up from a number of important things:
-    - A single primary instance + 0 or more replicas
-    - The replicas can be used for read during normal operations
-- Aurora uses a *Cluster*:
-    - Made up of a single primary instance and 0 or more replicas
-    - The replicas can be used for reads (not like the standby replica in RDS)
-    - Storage: the cluster uses a shared cluster volume (SSD based by default). Provides faster provisioning, improved availability and better performance. Size can go up to 128 TiB
-    - The storage has 6 replicas across AZs. The data is replicated synchronously. Replication happens at the storage level, no extra resources are consumed for replication
-    - By default only the primary instance are able to write to the storage, replicas and the primary can perform read operation
-    - Self-healing: Aurora can repair its data if a replica or part of the replica if there is a disk failure
-    - Aurora uses the cluster to repair the data with no corruption. As a result, Aurora avoids data loss and reduces needs for point-in-time restores or snapshot restores
-    - With Aurora can have up to 15 replicas, any of the replicas can be failed over to
-    - Billing for Aurora storage:
-        - Storage is billed to what we consume up to 128 TiB limit
-        - High water mark: we get billed for the most used data at a time, in case of free-up we will be billed for the max usage consumed
-        - In case we have to reduce data significantly, we will need to migrate the database to another cluster to avoid paying for the storage
-        - Recently Aurora introduced dynamic resizing, where we have to pay for only what we use. It is recommended to upgrade our database to an Aurora version which supports dynamic resizing
-    - Aurora clusters use endpoints, providing multiple endpoints:
-        - **Cluster endpoint**: always point to the primary instance, can be used for reads and writes
-        - **Reader endpoint**: points to the primary instance and also to the read-replicas. Aurora does load balancing we using this endpoint
-        - **Custom endpoint**: can be created by us
-        - **Instance endpoint**: each instance has its own endpoint
+* Aurora의 아키텍처는 일반 RDS와 상당히 다릅니다.
+* Aurora는 **클러스터(Cluster)** 라는 기본 단위를 사용합니다. (일반 RDS 인스턴스는 이런 “클러스터 단위” 개념이 핵심이 아닙니다.)
+* Aurora의 컴퓨팅 인스턴스는 **로컬 스토리지에 의존하지 않고**, 클러스터가 **공유하는 커스텀 볼륨(Shared cluster volume)** 을 사용합니다.
 
-## Aurora Costs
+#### Aurora 클러스터 구성 요소
 
-- No free-tier option, Aurora does not support micro instances
-- Beyond RDS singleAZ (micro) Aurora offers better value compared to other RDS options
-- Compute: hourly charge, per second, 10 minute minimum
-- Storage: GB/month consumed, IO cost per request made to the cluster's shared storage
-- Backups: 100% DB size in backups are included
+* **Primary(주 인스턴스) 1개 + Replica(리드 레플리카) 0개 이상**
+* Replica는 정상 동작 시 **읽기(Read)** 용도로 사용할 수 있습니다. (일반 RDS의 Standby처럼 “대기 전용”만은 아님)
 
-## Aurora Restore, Clone and Backtrack
+#### 스토리지(Cluster Volume) 특징
 
-- Backups in Aurora work the same way as other RDS
-- Restores create a new cluster
-- Backtrack can be enabled per cluster. They allow in-place rewinds to a previous point-in-time
-- Fast clone: makes a new database much faster than copying all the data. Aurora references the original storage, only stores any differences between the old data and the new one
+* 클러스터는 기본적으로 **SSD 기반 공유 스토리지**를 사용합니다.
+* 빠른 프로비저닝, 높은 가용성, 더 좋은 성능을 제공하며 **최대 128TiB**까지 확장 가능합니다.
+* 스토리지는 **여러 AZ에 걸쳐 6개 복제본**을 유지합니다.
 
-## Aurora Serverless
+  * 복제는 **스토리지 레벨에서 동기식(Synchronous)으로 수행**
+  * 컴퓨팅 인스턴스에서 별도 리소스를 써서 복제하는 방식이 아니라서 **복제 오버헤드가 상대적으로 적음**
+* 기본적으로 **쓰기(Write)는 Primary만 가능**하고, **읽기(Read)는 Primary/Replica 모두 가능**합니다.
 
-- It provides a version of Aurora without the need to statically provision the database instance
-- Removes admin overhead for managing db instances
-- Aurora Serverless uses the concept of ACU - Aurora Capacity Units: represent a certain amount of compute and a corresponding amount of memory
-- We can set minimum and maximum ACU values per cluster, can go down to 0
-- Consumption billing is per-second basis
-- Aurora Serverless provides the same resilience as Aurora provisioned (6 copies across AZs)
-- Aurora cluster architecture still exists, but in a for of serverless cluster. Instead of using provisioned instances we have capacity units
-- Capacity units are allocated from a warm pool of Aurora instances managed by AWS
-- ACUs are stateless, shared across multiple AWS customers
-- If the load increases beyond the ACU limit and the pool allows it, than more ACU will be allocated to the instance
-- In Aurora Serverless we have shared Proxy Fleet for connection management:
-    - It is used to distribute connections from us, Aurora users, to Aurora capacity units
-    - We never directly connect to Aurora, this makes Aurora scaling seamless
-- Aurora use cases:
-    - Infrequently used applications
-    - New applications where we are unsure about the levels of load that will be places on the application
-    - Variable and/or unpredictable workloads
-    - Development and test databases: Aurora can be configured to stop itself
-    - Multi-tenant applications where the scaling is aligned with infrastructure size and revenue
+#### Self-healing(자가 복구)
 
-## Aurora Multi-Master
+* 디스크 장애 등으로 복제본(또는 일부)에 문제가 생기면, Aurora가 **손상된 데이터를 자동 복구**할 수 있습니다.
+* 클러스터 구조를 이용해 **무결성을 유지하며 복구**하므로 데이터 손실 가능성을 줄이고, **PITR(시점 복구)나 스냅샷 복구 의존도를 낮출 수 있음**이라는 설명으로 자주 나옵니다.
 
-- Default Aurora mode is single-master: one read/write endpoint and 0 or more read replicas
-- In contrast with default mode for Aurora, multi-master offers multiple endpoints which can be used for reads and writes
-- There is no cluster endpoint to use, the application is responsible for connection to instances in the cluster
-- Benefits:
-    - Multiple writer endpoints, if we have an application which can failover between endpoints, the failover time can be significantly reduced
-    - Fault tolerance can be implemented at the application level, but the application needs to manually load balance between the instances
+#### Replica 및 Failover
+
+* Aurora는 **최대 15개의 Replica**를 둘 수 있습니다.
+* 장애 시 Replica 중 하나가 **Failover 대상**이 될 수 있습니다.
+
+#### Aurora 스토리지 과금
+
+* 스토리지는 **사용한 만큼(최대 128TiB 한도)** 과금됩니다.
+* (기존 설명 기준) **High water mark**: 한때라도 사용한 최대 저장량 기준으로 과금되는 모델이 언급됩니다. 즉, 데이터를 지워도 과금이 바로 줄지 않는다는 취지.
+* 저장 용량을 크게 줄여 과금을 낮추려면 **다른 클러스터로 마이그레이션**이 필요할 수 있다는 설명이 종종 따라옵니다.
+* 최근에는 **dynamic resizing(동적 리사이징)** 으로 “실사용 기반 과금”이 가능해졌다는 흐름이 있고, 이를 지원하는 Aurora 버전으로 업그레이드가 권장된다는 맥락입니다.
+
+#### Aurora 엔드포인트(Endpoints)
+
+* **Cluster endpoint**: 항상 **Primary**로 연결. 읽기/쓰기 모두 가능.
+* **Reader endpoint**: Primary 및 Replica를 대상으로 하며, Aurora가 **로드밸런싱**을 수행.
+* **Custom endpoint**: 사용자가 직접 생성(특정 Replica 그룹만 묶는 등).
+* **Instance endpoint**: 각 인스턴스별 고유 엔드포인트.
+
+---
+
+### Aurora 비용
+
+* **프리 티어가 없고**, Aurora는 **micro 인스턴스를 지원하지 않습니다.**
+* 단일 AZ의 아주 작은 RDS(예: micro) 대비로는 비용이 높을 수 있지만, 그 이상 스펙/구성에서는 가치가 좋다는 비교가 자주 나옵니다.
+* **Compute**: 시간당 과금(초 단위), **최소 과금 10분**
+* **Storage**: 사용량(GB/월) + 공유 스토리지에 대한 **IO 요청 비용**
+* **Backups**: DB 크기 **100%까지 백업이 포함**(초과분 과금)
+
+---
+
+### Aurora 복구, 클론, 백트랙(Backtrack)
+
+* 백업 방식은 다른 RDS와 유사합니다.
+* **Restore(복원)** 시에는 **새 클러스터가 생성**됩니다.
+* **Backtrack**: 클러스터 단위로 활성화 가능하며, **인플레이스(in-place)로 특정 시점까지 되감기**가 가능합니다.
+* **Fast clone**: 전체 데이터를 복사하지 않고 **원본 스토리지를 참조**하면서 시작하고, 변경된 차이만 저장하여 **매우 빠르게 새 DB를 만드는 방식**입니다.
+
+---
+
+### Aurora Serverless
+
+* DB 인스턴스를 고정(provisioned)으로 잡지 않고 **서버리스 형태로 Aurora를 사용**합니다.
+* DB 인스턴스 운영/관리 오버헤드를 줄입니다.
+* **ACU(Aurora Capacity Unit)** 개념을 사용하며, ACU는 **일정 컴퓨팅 + 메모리 조합**을 의미합니다.
+* 클러스터별로 **최소/최대 ACU**를 설정할 수 있고, **0까지 내려갈 수 있음**(워크로드/설정에 따라).
+* 사용량 기반으로 **초 단위 과금**합니다.
+* 프로비저닝형 Aurora와 동일하게 **AZ에 걸친 6중 스토리지 복제** 기반의 내구성을 가진다는 설명이 붙습니다.
+* 아키텍처 자체는 여전히 “클러스터”지만, 인스턴스 대신 **용량 유닛(ACU)** 가 할당되는 “서버리스 클러스터” 형태입니다.
+* ACU는 AWS가 관리하는 **warm pool**에서 할당됩니다.
+* ACU는 “stateless”로 여러 고객에게 풀 방식으로 공유된다는 식의 설명이 자주 나옵니다.
+* 부하가 증가하면 설정한 최대치/풀 여력 범위 내에서 ACU가 추가 할당됩니다.
+
+#### 연결 관리(Proxy Fleet)
+
+* Aurora Serverless는 연결 관리를 위해 **공유 프록시 플릿(Proxy Fleet)** 을 사용합니다.
+* 사용자는 Aurora 용량 유닛에 직접 연결하지 않고, 프록시가 연결을 분산해 **스케일링을 매끄럽게** 만듭니다.
+
+#### Aurora Serverless 사용 사례
+
+* 사용 빈도가 낮은 애플리케이션
+* 초기 단계(부하 예측이 어려운) 신규 애플리케이션
+* 변동성/예측 불가 워크로드
+* 개발/테스트 DB (자동 정지 설정 가능)
+* 멀티테넌트(테넌트 수익/규모에 맞춰 탄력 확장 필요)
+
+---
+
+### Aurora Multi-Master
+
+* 기본 Aurora는 **Single-master**(쓰기 1개, 읽기 레플리카 여러 개)입니다.
+* **Multi-master**는 여러 인스턴스가 **읽기/쓰기 엔드포인트**가 될 수 있습니다.
+* 이 모드에서는 “Cluster endpoint” 중심이 아니라, **애플리케이션이 각 인스턴스 엔드포인트로 연결을 관리**해야 한다는 설명이 따라옵니다.
+
+#### 장점
+
+* **Writer 엔드포인트가 여러 개**라서, 애플리케이션이 엔드포인트 간 failover를 잘 처리할 수 있으면 **장애 전환 시간을 크게 줄일 수 있음**
+* 애플리케이션 레벨에서 **내결함성/로드밸런싱**을 구현할 수 있지만, 그만큼 애플리케이션이 **직접 분산/연결 로직을 책임**져야 합니다.
