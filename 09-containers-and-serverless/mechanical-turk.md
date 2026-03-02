@@ -1,9 +1,23 @@
-# Amazon Mechanical Turk
+## Amazon Mechanical Turk (MTurk)
 
-- Provides a managed human task outsourcing system
-- Provides a set of APIs and a marketplace to outsource jobs to human beings
-- Allows requesters to post Human Intelligence Tasks (HITs) to a marketplace
-- Tasks are completed by workers, who earn money for it
-- Pay per task, perfect for tasks suited to humans rather than ML
-- Qualification: worker attribute, we can require a test. A qualification can be a requirement to complete HITs
-- Great for data collection, manual processing, image classification
+* **관리형 크라우드소싱(사람 기반 아웃소싱) 서비스**
+
+  * 사람(Worker)에게 해야 하는 작업을 **HIT(Human Intelligence Task)** 형태로 맡길 수 있는 **마켓플레이스 + API** 제공
+  * 요청자(Requester)가 작업을 올리고, 작업자가 수행 후 **작업 단위로 보상**을 받는 구조
+
+* **주요 특징**
+
+  * **Pay per task(건당 과금)**: 소규모/반복 작업을 빠르게 확장하기 좋음
+  * **사람이 더 잘하는 작업에 적합**: ML로 애매하거나 비용 대비 효율이 낮은 영역에 유리
+
+* **자격(Qualification) / 품질 관리**
+
+  * Worker의 속성(예: 위치, 승인률 등) 또는 **사전 테스트**로 자격을 만들고,
+  * 특정 HIT 수행을 위해 **자격 요구조건**을 걸 수 있음
+  * (실무적으로는) 골드 데이터(정답 포함), 중복 라벨링, 리뷰/거절 정책 등으로 품질을 보강
+
+* **대표 사용처**
+
+  * **데이터 수집/라벨링**: 이미지 분류, 텍스트 분류, 엔티티 태깅 등
+  * **수동 처리**: 검수, 요약 검토, 카탈로그 정리
+  * **휴먼 인 더 루프(Human-in-the-loop)** 워크플로우의 사람 단계 연
