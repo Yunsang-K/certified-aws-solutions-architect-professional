@@ -1,49 +1,78 @@
-# VM Migrations AWS <=> On-Premises
+## VM Migrations (AWS ↔ On-Premises)
 
-## Application Discovery Service (AMS)
+아래 내용은 전반적으로 방향은 맞지만, **용어/약어**와 **현재 AWS 권장 서비스** 관점에서 몇 군데 보정이 필요합니다.
 
-- Allows us to discover on-premises infrastructure:
-    - What VM we have
-    - What CPU and memory they are allocated
-    - MAC addresses
-    - Resource utilization
-    - etc.
-- It also tracks these properties over time for more effective migration
-- AMS runs in 2 modes:
-    - Agentless (Application Discovery Agentless Connector): 
-        - It is an OVA based virtual appliance that integrates with VMWare
-        - It can measure performance and resource usage, information which can be obtained from the outside of a VM
-    - Agent Based mode (with CloudWatch Agent): offers additional information from inside of a VM
-        - Offers data gathering for network, processes, performance
-        - We can see applications running on a VM
-        - We can even see dependencies between VM based on network activity
-- AMS does not migrate anything, it helps us discover VM instances and relationships between them in order to be migrated
-- This information is valuable if we have thousands of instances we want to migrate
-- AMS integrates with AWS Migration Hub and Athena
-- **AWS Migration Hub**: tracks migrations of different types in AWS. Migrations such as VM migrations and database migrations
+---
 
-## Server Migration Service (SMS)
+## 1) Application Discovery Service (ADS)  *(질문 글의 “AMS”는 보통 잘못 쓰는 경우가 많음)*
 
-- Used to migrate whole VMs into AWS (including OS, Data, Apps, etc.)
-- This is the tool which actually performs the migration
-- It runs in agentless mode using a connector. The connector is VM which runs on on-premises within our existing VM environment
-- The connector integrates with VMware, Hyper-V and AzureVM
-- SMS does incremental replication of live volumes
-- Offers orchestration of multi-servers migrations
-- Creates AMIs which can be used to create EC2 instances
-- It can be used with other tooling such as CloudFormations to automate repeated deployment of instances
-- It too integrates with AWS Migration Hub
+**역할:** “마이그레이션을 *하기 전에*” 온프렘 워크로드를 **발견(Discovery) / 인벤토리화 / 의존성 파악**해서 마이그레이션 계획에 쓰는 서비스.
 
-## AWS Application Migration Service (MGN)
+* 수집 대상
 
-- Is used to migrate servers from on-prem to AWS
--  It allows companies to lift-and-shift a large number of physical, virtual, or cloud servers without compatibility issues, performance disruption, or long cutover windows
-- AWS recommends agent-based replication when possible as it supports continuous data protection (CDP)
-- AWS MGN provides this agent. MGN creates a Launch Template which is then used to launch EC2 instances
-- AWS MGN provides a way to work out what kind of dependencies do we have between databases, app servers, web servers, etc. We can group these servers and migrate them together
-- It can also provide CloudFormation templates for deployment
-- Difference between SMS and MGN:
-    - Server Migration Service utilizes incremental, snapshot-based replication and enables cutover windows in hours
-    - Application Migration Service utilizes continuous, block-level replication and enables short cutover windows measured in minutes
-- AWS recommends to use MGN instead of SMS
-- We can migrate virtual and physical servers as well
+  * 서버/VM 스펙(코어, 메모리), OS 정보, 프로세스, 네트워크 연결/포트, 성능/사용률 등(모드에 따라 차이)
+* 모드
+
+  * **Agentless**: VMware(vCenter) 기반으로 VM 바깥에서 수집 (커넥터/어플라이언스)
+  * **Agent-based**: 서버 내부에 에이전트 설치로 더 깊은 정보(프로세스/네트워크 연결 등) 수집
+* 연동
+
+  * **AWS Migration Hub**로 디스커버리/마이그레이션 추적 통합
+  * (분석용으로 Athena 등을 붙일 수는 있지만, “기본 통합 기능”처럼 이해하면 과장될 수 있음)
+
+**핵심:** ADS는 **마이그레이션 수행 도구가 아니라**, “뭘/어떻게 옮길지”를 정리하는 **사전 조사/설계 단계 도구**.
+
+---
+
+## 2) AWS Migration Hub
+
+**역할:** 여러 마이그레이션 도구(서버, DB 등)의 진행 상황을 **한 곳에서 추적/가시화**하는 “허브”.
+
+* 실제 복제/컷오버를 수행하진 않음
+* Discovery 결과, 마이그레이션 Wave/그룹, 상태 추적에 유용
+
+---
+
+## 3) Server Migration Service (SMS) — *레거시/대체됨에 가까움*
+
+질문 글 설명(스냅샷 기반 증분 복제, AMI 생성, Migration Hub 연동)은 과거 SMS 설명과 결은 맞습니다. 다만 시험/실무 관점에서 중요한 포인트는:
+
+* **현재 AWS는 서버 Lift & Shift에는 MGN을 표준으로 강하게 밀고 있음**
+* 따라서 “SMS vs MGN 비교”가 나오면 대부분 **MGN이 정답 방향**입니다.
+
+> 정리하면: SMS는 “예전 방식(스냅샷 기반)”으로 이해하되, 선택지는 보통 MGN 쪽이 맞습니다.
+
+---
+
+## 4) AWS Application Migration Service (MGN) — 서버 Lift & Shift의 표준
+
+**역할:** 물리/가상(및 타 클라우드) 서버를 AWS로 **Lift & Shift(리호스트)** 하는 메인 서비스.
+
+* 방식
+
+  * **Agent 기반**으로 소스 서버에 복제 에이전트를 설치
+  * **블록 레벨 지속 복제(continuous replication)** → **짧은 컷오버(분 단위)**가 가능해지는 구조
+* 산출물/운영
+
+  * 복제 데이터로 EC2를 띄울 때 **Launch Template**(또는 이에 준하는 런치 설정)을 기반으로 테스트/컷오버
+  * Wave(그룹) 단위로 서버를 묶어 **동시 컷오버** 설계 가능
+* “의존성 파악” 관련
+
+  * MGN 자체도 그룹화/웨이브를 지원하지만, **정밀한 의존성 가시화는 보통 ADS/ Migration Hub 쪽과 함께 설계**하는 그림이 더 자연스럽습니다.
+
+---
+
+## 5) SMS vs MGN — 시험에서 잡아야 하는 한 줄
+
+* **SMS:** 스냅샷 기반 증분 복제(레거시 성격), 컷오버가 상대적으로 길어질 수 있음(시간 단위로 표현되는 경우가 많음)
+* **MGN:** 블록 레벨 지속 복제(Agent), **짧은 컷오버(분 단위)**, 대규모 리호스트에 표준
+
+---
+
+## 오답/혼동 방지 포인트(자주 틀리는 것)
+
+* **Discovery(ADS)** ≠ **Migration 수행(MGN)**
+* “AMS” 표기는 혼동 유발:
+
+  * 보통 **Application Discovery Service(ADS)** / **Application Migration Service(MGN)** 를 구분해서 씁니다.
+* “Migration Hub”는 어디까지나 **추적/통합 대시보드** 역할
