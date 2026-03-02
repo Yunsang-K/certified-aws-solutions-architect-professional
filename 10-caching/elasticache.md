@@ -1,19 +1,53 @@
-# ElastiCache
+## Amazon ElastiCache
 
-- It is an in-memory database for application which need high-end performance
-- It is orders of magnitude faster than a classic DB, but is not persistence
-- ElastiCache provides 2 different engines: Managed Redis and MemcacheD as a service
-- ElastiCache can be used for read heavy workloads with low latency requirements
-- Can be used for reduction of database workloads, by this reducing cost accumulated by heavy database usage
-- Can be used to store session date, making stateful applications stateless
-- Using ElastiCache requires application code changes!
+* **완전관리형 인메모리 데이터 스토어**로, 애플리케이션에서 **초저지연(대개 ms 미만) 조회**가 필요할 때 사용
+* 전형적인 RDB/디스크 기반 DB 대비 **매우 빠르지만**, 기본 목적은 **캐시/휘발성 워크로드**(DB의 “대체”가 아니라 “보완”)
+* 엔진 2가지:
 
-## Redis vs MemcacheD
+  * **ElastiCache for Redis(Managed Redis)**
+  * **ElastiCache for Memcached**
+* 대표 사용처
 
-- Both offer sub-millisecond access to data
-- MemcacheD supports simple data structures (string), while Redis can support more advanced type of data: lists, sets, sorted sets, hashes, bit arrays, etc.
-- Redis supports replication of data across multiple AZs, MemcacheD supports multiple nodes with manual sharding, but it does not supports "true" replication across AZs for scalability reasons
-- Redis supports backups and restores, MemcacheD does not support persistance
-- MemcacheD is multi-threaded by design, can take better advantage of multithreaded CPUs, can offer better performance
-- Redis supports transactions (multiple operations at once)
-- Both of these engines can support a ranges of instance types
+  * **읽기 위주(READ-heavy)** 트래픽에서 DB 부하/지연 감소
+  * **캐시로 DB 호출 수 감소 → DB 사이즈/IO/커넥션 비용 절감**
+  * **세션 저장소**로 활용해 웹 계층을 더 **stateless**하게 구성(수평 확장 쉬워짐)
+* **애플리케이션 코드 변경이 필요**(캐시 조회/미스 처리/무효화 전략 등)
+
+> 보완하면 좋은 포인트: “ElastiCache는 영속 DB가 아니다”는 방향은 맞지만, **Redis는 백업/복제 등으로 ‘내구성 옵션’을 일부 제공**할 수 있어 “완전 비영속”으로 단정하는 표현은 피하는 게 안전합니다.
+
+---
+
+## Redis vs Memcached (시험/실무에서 자주 나오는 차이)
+
+### 1) 데이터 모델
+
+* **Memcached**: 단순 Key-Value(주로 문자열/바이너리 블랍)
+* **Redis**: Key-Value + **풍부한 자료구조**(List/Set/Sorted Set/Hash/Bitmap 등) → 기능적으로 더 “데이터 구조 서버”에 가까움
+
+### 2) 고가용성/복제/백업
+
+* **Redis**:
+
+  * **복제(Replica)**, **Multi-AZ 구성**, **백업/복구** 지원(클러스터/리플리케이션 기반)
+* **Memcached**:
+
+  * **복제/백업 개념이 없음**(캐시로서 단순/휘발에 최적)
+  * 스케일은 노드 추가로 하지만, 기본적으로 **클라이언트 측 샤딩** 성격이 강함
+
+### 3) 성능 특성
+
+* **Memcached**: 멀티스레드 설계로 **CPU 코어 활용에 유리**한 케이스가 많고, 단순 캐싱에 강점
+* **Redis**: 기능이 풍부한 대신(자료구조/원자 연산/스크립팅 등) 선택하는 기능에 따라 오버헤드가 생길 수 있음
+
+### 4) 기능(원자성/트랜잭션)
+
+* **Redis**: 원자 연산, 트랜잭션(MULTI/EXEC), 다양한 기능 지원
+* **Memcached**: 단순 캐시 용도에 집중
+
+---
+
+## SAP-Pro에서 “이렇게 고르면 된다” 식의 빠른 기준
+
+* **세션 저장소 / 리더보드 / 카운터 / 분산락 / PubSub / 복제/백업 필요** → **Redis**
+* **아주 단순한 캐시(최대한 빠르고 단순) / 기능 최소** → **Memcached**
+* **“캐시지만 장애 시 데이터 날아가면 곤란”**(복구/HA 필요) → 대체로 **Redis**
