@@ -1,108 +1,187 @@
-# API Gateway
+## Amazon API Gateway 개요
 
-- Is a service which lets us create and manage APIs
-- API Gateway acts as endpoint or entry-point applications which want to talk with our services
-- Sits between the application and integrations (services)
-- API Gateway is HA and scalable
-- Handles authorization, throttling, caching, CORS, transformations
-- It also supports the OpenAPI spec and direct integration with other AWS services
-- API gateway is a public service
-- It can provide APIs using REST and WebSocket
-- API Gateway overview:
-    ![API Gateway Architecture](images/APIGateway.png)
+* **Amazon API Gateway**는 API를 **생성, 게시, 유지관리, 모니터링, 보안(보호)** 할 수 있게 해주는 관리형 서비스이다.
+* 애플리케이션(클라이언트)과 백엔드 통합 대상(Integrations: Lambda, HTTP, AWS 서비스 등) 사이에서 **엔드포인트/진입점(Entry Point)** 역할을 한다.
+* **고가용성(HA)** 및 **자동 확장(Scalable)** 특성을 갖는다.
+* 다음 기능을 제공한다:
 
-## Authentication
+  * 인증/인가(Authorization)
+  * 스로틀링(Throttling)
+  * 캐싱(Caching)
+  * CORS 처리
+  * 요청/응답 변환(Transformations)
+* **OpenAPI 스펙**을 지원하며, AWS 서비스와의 직접 통합을 지원한다.
+* 기본적으로 **퍼블릭 서비스**이다.
+* **REST API**, **WebSocket API**를 제공할 수 있다.
 
-- API Gateway supports a range of authentication types such as Cognito, Lambda based authentication (Custom based authentication - we can assume the client uses a Bearer token) and IAM credentials
-- We can allow APIs to be open access without authentication
+---
 
-## Endpoint Types
+## 인증(Authentication)
 
-- **Edge-Optimized**: any incoming request is routed to the nearest CloudFront POP (point of presence)
-- **Region**: region endpoint for clients in the same region, it does not utilize the CloudFront endpoint
-- **Private**: endpoints only accessible in a VPC via interface endpoints
+API Gateway는 다음과 같은 인증 방식을 지원한다.
 
-## Stages
+* **Amazon Cognito**
+* **Lambda 기반 커스텀 인증(Custom Authorizer)**
 
-- When we deploy an API configuration, we are doing it into a stage
-- Example we can have prod/dev stage with uniq settings and urls
-- Deployments can be rolled back on a stage
-- On stages we can enable canary deployments. When enabled, the deployment will be made to the canary not the stage itself
-- Traffic distribution can be altered between canary and base stage
-- Canary stage can be promoted to base
+  * 예: 클라이언트가 Bearer 토큰을 사용하는 시나리오 등
+* **IAM 자격 증명(IAM credentials)**
 
-##  Errors
+또한 **인증 없이 공개(Open Access)** API로 구성할 수도 있다.
 
-- `4XX` - Client errors: invalid request on the client side
-- `5XX` - Server errors: valid request, backend issue
-- `400 - Bad Request`: generic client side error
-- `403 - Access Denied`: authorizer denies request, request is WAF filtered
-- `429` - API Gateway can throttle: this means we have exceeded a specified amount of requests
-- `502 - Bad Gateway Exception`: bad output returned by Lambda
-- `503 - Service Unavailable`: backing endpoint is offline
-- `504` - Integration Failure/Timeout (29s limit)
+---
 
-## Caching
+## 엔드포인트 유형(Endpoint Types)
 
-- Caching is configured per stage
-- We can define a cache on a stage (500 MB up to 237 GB)
-- Cache TTL default value is 300 seconds, configurable between 0 and 3600s. Can be encrypted
-- Calls only will reach the backend in case of a cache miss
+* **Edge-Optimized**
 
-## Methods and Resources
+  * 요청을 **가장 가까운 CloudFront POP(엣지 로케이션)** 으로 라우팅하여 전 세계 사용자 지연 시간을 줄인다.
+* **Regional**
 
-- API Gateway URL example: `https://1nj7i16t37.execute-api.us-east-1.amazonaws.com/dev/listcats`
-- The URL can be represents the following: `[api-gateway-endpoint]/[stage]/[resource]`
-- Stages are logical configurations. APIs are deployed into stages. Stages can be used for different application versions or lifecycle points for an API
-- API changes only take effect after it is deployed into a stage
-- Methods are the desired action to be performed. Methods are HTTP verbs
-- Methods are where integrations are configured which provide the functionality of an API. Methods can integrate with Lambda, HTTP and other AWS services
+  * **리전 엔드포인트**를 직접 사용한다.
+  * Edge-Optimized처럼 CloudFront POP 기반 최적화를 기본으로 사용하지 않는다.
+* **Private**
 
-## Integrations
+  * **VPC 내부에서만 접근 가능**한 엔드포인트
+  * 일반적으로 **VPC Interface Endpoint(PrivateLink)** 를 통해 접근한다.
 
-- API Gateway is capable of connecting to Lambda, HTTP Endpoints (running on-premises or on AWS), Step Functions, SNS, DynamoDB
-- APIs have 3 phases:
-    - Request: authorize, validate and transform the request
-    - Integrations
-    - Response: transform, prepare and return the response
-- The request and response phases are split into 2 parts:
-    - Method Request: defines everything about the client request to method (path, headers, parameters)
-    - Integration Request: parameters from the method request are transferred to the integrations
-    - Integration Response: converts the data from the backend to a form which can be sent back to the client
-    - Method Response: how the communication is delivered back to the client
-- API methods which are on the client side decide what the client request to method is like. There are integrated to a backend endpoint via integrations
-- Integration types:
-    - **MOCK**: used for testing, no backed involved. It returns a static response
-    - **HTTP**: http custom integration, backend is a HTTP endpoint. We have to configure both integration request and integration response
-    - **HTTP Proxy**: subtype of the HTTP integration, but where proxying is utilized. Allows the access HTTP endpoint with a streamline integration. Proxying is where the request is passed to the endpoint as is and sent back to the client as is
-    - **AWS**: allows an API to expose AWS services. We have to configure both the integration request and response and setup necessary mappings from the method request to the integration request. Can be used with Lambda functions, but it is relatively complex way of using it with Lambda
-    - **AWS_PROXY (LAMBDA)**: integration request/response does not have to be defined, API Gateway passes the request unmodified
-- Mapping template: used for non-proxy integrations. Used for:
-    - Modify or rename parameters
-    - Modify the body or header of the request
-    - Filtering - remove anything from the request
+---
 
-## Mapping Templates
+## 스테이지(Stages)
 
-- Used for AWS and HTTP (non proxy) integrations
-- It is able modify and rename parameters between the integrations
-- It can modify the body or the headers of a request
-- It can provide filtering by removing anything which is not needed
-- Mapping uses VTL (Velocity Template Langue) for editing the request
-- Use cases for mapping templates:
-    - Integrate a REST API on API Gateway with a SOAP API
+* API 구성을 배포(Deploy)할 때, **스테이지(Stage)** 로 배포한다.
+* 예: `dev`, `prod` 스테이지를 분리해 **서로 다른 설정과 URL**을 운영 가능
+* 스테이지 단위로 **롤백(Rollback)** 이 가능하다.
+* 스테이지에서 **카나리 배포(Canary Deployment)** 를 활성화할 수 있다.
 
-## Stages and Deployments
+  * 활성화 시, 새 배포는 “스테이지 전체”가 아니라 **카나리**로 먼저 배포된다.
+  * **트래픽 분배 비율**을 카나리/기본(stage base) 간 조정 가능
+  * 카나리를 검증 후 **기본 스테이지로 승격(promote)** 가능
 
-- Editing an API, we are editing settings which are not live (not published)
-- The current state of the API needs to be deployed to a stage
-- Each stage has its own configuration. Configurations are not immutable, can be modified, overwritten or rolled back
-- Stage variables: environment variables for stages
+---
 
-## Swagger and OpenAPI
+## 오류 코드(Errors)
 
-- OpenAPI (OAS) defines a standard language-agnostic interface to RESTful APIs
-- OpenAPI v2 is formerly known as Swagger
-- OpenAPI v3 is a more recent version
-- OpenAPI defines endpoints, operation (GET, POST, etc.), input and output parameters and authentication methods
-- API Gateway is capable of import OpenAPI format and generating it. Useful for backups and migrations
+* **4XX**: 클라이언트 오류(요청 자체가 잘못됨)
+* **5XX**: 서버 오류(요청은 유효하지만 백엔드/통합 쪽 문제)
+
+대표 예시:
+
+* **400 Bad Request**: 일반적인 클라이언트 요청 오류
+* **403 Access Denied**: Authorizer가 거부했거나 WAF에서 차단됨
+* **429 Too Many Requests**: 스로틀링에 의해 요청 제한 초과
+* **502 Bad Gateway**: Lambda가 잘못된 출력을 반환(통합 결과가 비정상)
+* **503 Service Unavailable**: 백엔드 엔드포인트가 오프라인
+* **504 Integration Failure/Timeout**: 통합 타임아웃/실패 (통합 타임아웃 기본 제한: **29초**)
+
+---
+
+## 캐싱(Caching)
+
+* 캐싱은 **스테이지 단위로 설정**한다.
+* 스테이지 캐시 크기: **500MB ~ 237GB**
+* 기본 TTL: **300초**, 설정 가능 범위: **0 ~ 3600초**
+* 캐시는 암호화(Encryption) 가능
+* **캐시 미스(Cache miss)** 인 경우에만 백엔드가 호출된다.
+
+---
+
+## 리소스와 메서드(Methods and Resources)
+
+예시 URL:
+`https://1nj7i16t37.execute-api.us-east-1.amazonaws.com/dev/listcats`
+
+* URL 구조:
+
+  * `[api-gateway-endpoint] / [stage] / [resource]`
+* 스테이지(Stage)는 **논리적 구성 단위**이며, API는 스테이지에 배포되어야 변경이 반영된다.
+* 메서드(Method)는 수행할 동작(HTTP Verb: GET/POST 등)을 의미한다.
+* 메서드에 **통합(Integration)** 을 설정하여 실제 백엔드 기능(Lambda/HTTP/AWS 서비스)을 연결한다.
+
+---
+
+## 통합(Integrations)
+
+API Gateway는 다음과 통합할 수 있다.
+
+* **Lambda**
+* **HTTP 엔드포인트**(온프레미스 또는 AWS)
+* **Step Functions**
+* **SNS**
+* **DynamoDB**
+
+API 처리 흐름은 크게 3단계:
+
+1. **Request 단계**: 인증, 검증, 변환
+2. **Integration 단계**: 백엔드 호출
+3. **Response 단계**: 변환 후 클라이언트에 반환
+
+또한 요청/응답은 다음 구성으로 나뉜다.
+
+* **Method Request**: 클라이언트가 보내는 요청 정의(경로/헤더/쿼리/파라미터 등)
+* **Integration Request**: Method Request에서 받은 값을 통합 대상으로 매핑/변환
+* **Integration Response**: 백엔드 응답을 클라이언트로 보낼 형식으로 변환
+* **Method Response**: 클라이언트에 반환되는 응답 형태 정의
+
+---
+
+## 통합 유형(Integration Types)
+
+* **MOCK**
+
+  * 테스트 용도, 백엔드 없이 **정적 응답** 반환
+* **HTTP**
+
+  * 커스텀 HTTP 통합
+  * **Integration Request/Response를 직접 구성**해야 함
+* **HTTP Proxy**
+
+  * HTTP 통합의 하위 형태
+  * 프록시 방식으로 **요청/응답을 거의 그대로 전달**(설정 단순화)
+* **AWS**
+
+  * AWS 서비스를 직접 노출하는 통합
+  * **요청/응답 매핑**이 필요하고, Lambda에도 사용할 수 있으나 구성은 상대적으로 복잡
+* **AWS_PROXY (Lambda Proxy)**
+
+  * Integration Request/Response 정의가 거의 필요 없음
+  * API Gateway가 요청을 **변경 없이** Lambda로 전달(프록시 이벤트)
+
+---
+
+## 매핑 템플릿(Mapping Templates)
+
+* **비(Non-Proxy) 통합(AWS, HTTP)** 에서 사용
+* 통합 간 매핑/변환 기능:
+
+  * 파라미터 수정/이름 변경
+  * 바디/헤더 수정
+  * 필터링(불필요한 데이터 제거)
+* 템플릿 언어: **VTL(Velocity Template Language)**
+* 대표 사용 사례:
+
+  * API Gateway의 REST API를 **SOAP API** 와 통합할 때 변환 계층으로 활용
+
+---
+
+## 스테이지와 배포(Stages and Deployments)
+
+* API 편집은 곧바로 라이브에 반영되지 않는다(미게시 상태).
+* 변경 사항은 반드시 **스테이지로 배포**되어야 적용된다.
+* 스테이지별로 서로 다른 구성을 운영할 수 있다.
+* 스테이지 구성은 불변(immutable)이 아니라서 수정/덮어쓰기/롤백이 가능하다.
+* **Stage Variables**: 스테이지별 환경변수처럼 활용
+
+---
+
+## Swagger와 OpenAPI
+
+* **OpenAPI(OAS)** 는 RESTful API를 정의하는 언어/플랫폼 독립적 표준 인터페이스이다.
+* **OpenAPI v2 = Swagger**
+* **OpenAPI v3**는 더 최신 버전
+* OpenAPI는 다음을 정의한다:
+
+  * 엔드포인트
+  * 오퍼레이션(GET/POST 등)
+  * 입력/출력 파라미터
+  * 인증 방식
+* API Gateway는 **OpenAPI 형식으로 Import/Export** 가능하며, **백업/마이그레이션**에 유용하다.
