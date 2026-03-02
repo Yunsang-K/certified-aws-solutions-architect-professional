@@ -1,10 +1,11 @@
-# AWS GuardDuty
+## AWS GuardDuty
 
-- It is a security service used for continuous monitoring of an account
-- It can be integrated with supported data sources, constantly monitoring them
-- It uses AI/ML and thread intelligent feeds for monitoring for suspicious activities
-- Identifies any unexpected and unauthorized activity and it tries to spot odd activities
-- If it finds something, it can be configured to notify us or to do event-driven protection/remediation
-- Supports multiple accounts (Master and Member accounts)
-- GuardDuty architecture:
-    ![GuardDuty architecture](images/AmazonGuardDuty.png)
+* **계정에 대한 지속적인 모니터링**을 수행하는 보안 서비스이다.
+* 지원되는 **데이터 소스와 통합**할 수 있으며, 이들 소스를 **상시 모니터링**한다.
+* **AI/ML**과 **위협 인텔리전스 피드(Threat Intelligence Feeds)**를 사용해 의심스러운 활동을 탐지한다.
+* **예상치 못한 활동** 또는 **권한 없는(Unauthorized) 활동**을 식별하고, 이상 징후(odd activities)를 찾아내려고 한다.
+* 탐지 결과가 발생하면, **알림 전송** 또는 **이벤트 기반 보호/자동 조치(리미디에이션)**로 연계하도록 구성할 수 있다.
+* **다중 계정 환경을 지원**하며, **마스터(관리) 계정**과 **멤버 계정** 구조로 운영 가능하다.
+* GuardDuty 아키텍처:
+
+  * (제공한 다이어그램: `AmazonGuardDuty.png`)
