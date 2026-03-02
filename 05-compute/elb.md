@@ -1,138 +1,161 @@
-# ELB - Elastic Load Balancer
+## 1) ELB 기본 아키텍처 핵심 정리 (시험 표현으로 보정)
 
-## ELB Architecture
+* 로드 밸런서는 **클라이언트 연결을 수신**하고, 등록된 **백엔드 타깃(Target)** 으로 트래픽을 분산한다.
+* ELB는 단일 서비스가 아니라 제품군:
 
-- It is the job of the load balancer to accept connection from customers and distribute those connections to any registered backend compute
-- ELBs support many different type of compute services
-- LB architecture:
-![LB Architecture](images/ELBArchitecture1.png)
-- Initial configurations for ELB:
-    - IPv4 or double stacking (IPv4 + IPv6)
-    - We have to pick the AZ which the LB will use, specifically we are picking one subnet in 2 or more AZs
-    - When we pick a subnet, AWS places one or more load balancer nodes in that subnet
-    - When an LB is created, it has a DNS A record. This A record points to all the nodes provisioned for the LB => all the incoming connections are distributed equally
-    - The nodes are HA: if the node fails, a different one is created. If the load is to high, multiple nodes are created
-    - We have to decide on creation if the LB is internal or internet facing. The internet facing the nodes will have public IP addresses otherwise private IP address is assigned. EC2 innstances need not have public IP address for internet facing LB. <span style="color: #ff5733;"><!Important for EXAM></span>
-- Load Balancers are configured with listeners which accept traffic on a port and protocol and communicate with the targets
-- An internat facing load balancer can connect to both public and private instances
-- Minimum subnet size for a LB to function is /28 - 8 or more fee addresses per subnet (AWS suggests a minimum of /27)
-- Internal LB are same as internet LB but they have private IP address assiged to the nodes. Internal LB are used to connect to private nodes and help in internal scaling,
+  * **ALB**(L7), **NLB**(L4), **GWLB**(L3/가상 어플라이언스용) + (레거시) **CLB**
+* 생성 시 주요 선택:
 
-## Cross-Zone Load Balancing
+  * **IP 타입**: IPv4 또는 **Dualstack(IPv4+IPv6)**
+  * **서브넷 선택**: 최소 2개 AZ에 걸쳐 **각 AZ당 1개 서브넷** 선택(권장).
 
-- An LB by default has at least one node per AZ that is configured for
-- Initially each LB node could distribute connections to instances in the same AZ
-- Cross-Zone Load Balancing: allows any LB node to distribute connections equally across all registered instances in all AZs.
-- This help with the uneven distribution of load and could be helpful in <span style="color: #ff5733;">EXAM</span>
-![CROSS-ZONE LB Architecture](images/ELBArchitecture2.png)
+    * 선택한 서브넷마다 **로드 밸런서 노드(ENI 기반)** 가 배치됨.
+  * **스킴(Scheme)**:
 
-## User Session State
+    * **internet-facing**: 노드가 **퍼블릭 IP** 를 가짐
+    * **internal**: 노드가 **프라이빗 IP** 만 가짐
+  * **DNS 이름 제공**: ELB는 고정 IP가 아니라 **DNS 이름**을 제공(시험에서 “IP로 고정 접근” 요구가 나오면 NLB의 EIP/고정 IP 옵션을 떠올리기)
 
-- Session state: 
-    - A piece of server side information specific to one single user of one application
-    - It does persist while the user interacts with the application
-    - Examples of session state: shopping cart, workflow position, login state
-- The date representing a sessions state is either stored internally or externally (stateless applications)
-- Externally hosted session:
-    - Session data is hosted outside of the back-end instances => application becomes stateless
-    - Offers the possibility to do load balancing for the back-end instances, the session wont get lost in case the LB redirects the user to a different instance
+✅ **시험 포인트(중요)**
 
-## ELB Evolution
+* **internet-facing LB를 써도 백엔드 EC2는 퍼블릭 IP가 필요 없다.** (백엔드는 프라이빗 서브넷에 있어도 됨)
+* “LB가 어디에 존재하나?” → **선택한 서브넷에 노드가 생성**되는 구조로 이해.
 
-- Currently there are 3 different types of LB in AWS
-- Load balancers are split between v1 and v2 (preferred)
-- LB product started with Classic Load Balancers (v1)
-- CLBs can load balance HTTP/HTTPS and lower level protocols as well, although they can not understand the http protocol, they can't make decision based on HTTP protocols features
-- CLBs can have only 1 SSL certificate per load balancer
-- They can not be considered entirely being a layer 7 product
-- We should default to using v2 load balancer for newer deployments
-- Version 2 (v2) load balancers:
-    - Application Load Balancer (ALB - v2 LB) are layer 7 devices, they support HTTP(S) and WebSocket protocols
-    - Network Load Balancers (NLB) are also v2 load balancers supporting lower level protocols such as TCP, TLS and UDP. 
-      These could be used for applications like Email servers, Games or applications which does't use HTTP/s protocols.
-- In general v2 load balancers are faster and they support target groups and rules, this allow to use single LB for multiple things.
+---
 
-## Application and Network Load Balancers
+## 2) 서브넷 최소 크기 (/28) 관련 보정
 
-- Consolidation of load balancers:
-    - Classic load balancers do not scale, they do not support multiple SSL certificates (no SNI support) => for every application a new load balancer is required
-    - V2 load balancers support rules and target groups
-    - V2 load balancers can have host based rules using SNI
-- **Application Load Balancer (ALB)**:
-    - ALB is a true layer 7 load balancer, configured to listen either HTTP or HTTPS protocols
-    - ALB can not understand any other layer 7 protocols (such as SMTP, SSH, etc.)
-    - ALB requires HTTP and HTTPS listeners
-    - It can understand layer 7 content, such as cookies, custom headers, user location, app behavior, etc.
-    - Any incoming connection (HTTP, HTTPS) is always terminated on the ALB - no unbroken SSL
-    - All ALBs using HTTPS must have SSL certificates installed
-    - ALBs are slower than NLBs because they require more levels of networking stack to process. Any <span style="color: #ff5733;">EXAM</span> question which talks about performance, NLB should be considered instead of ALB.
-    - ALB offer health checks evaluation at application layer
-    - Application Load Balancer Rules:
-        - Rules direct connection which arrive at a listener
-        - Rules are processed in a priority order, default rule being a catch all
-        - Rule conditions: host-header, http-header, http-request-method, path-pattern, query-string and source-ip
-        - Rule actions: forward, redirect, fixed-response, authenticate-oidc and authenticate-cognito
-    - The connection from the LB and the instance is a separate connection
-    - If you need to forward connections without terminating on the LB, then you need to consider NLB. (<span style="color: #ff5733;">EXAM</span>)
-- **Network Load Balancer (NLB)**:
-    - NLBs are layer 4 load balancers, meaning they support TPC, TLS, UDP, TCP_UDP connections
-    - They have no understanding of HTTP or HTTPS => no concept of network stickiness
-    - They are really fast, can handle millions of request per second having 25% latency of ALBs because they don't have to deal with any  of the heavy computational upper layers.
-    - Recommended for SMTP, SSH, game servers, financial apps (not HTTP(S)) <-- <span style="color: #ff5733;">EXAM</span>
-    - Health checks can only check ICMP or TCP handshake
-    - They can be allocated with static IP addresses which is udeful for whitelisting which is beneficial for corporate client.
-    - They can forward TCP straight through the instances => unbroken encryption <-- <span style="color: #ff5733;">EXAM</span>
-    - NLBs can be used for PrivateLink <-- <span style="color: #ff5733;">EXAM</span>
+* 노트 내용: “/28 - 8개 이상 free addresses”
+* 보정: ELB가 사용하는 IP/ENI 고려로 **서브넷은 충분히 크게(/27 이상 권장)** 잡는 게 안전.
 
-- **Scenarios for NLB**:
-    - Unbroken encryption
-    - Static IP for whitelisting
-    - Fast performance
-    - Protocols other tha HTTP or HTTPS
-    - Privatelink
+  * 시험에서 계산 문제로 깊게 나오기보단, **“서브넷 너무 작아서 LB 생성 실패/스케일 실패”** 류 트러블슈팅 포인트로 자주 등장합니다.
 
-## Session Stickiness
+---
 
-- Stickiness: allows us to control which backend instance to be used for a given connection
-- With no stickiness connections are distributed across all backend services
-- Enabling stickiness:
-    - CLB: we can enable it per LB
-    - ALB: we can enable it per target group
-- When stickiness is enabled, the LB generates a cookie: `AWSALB` for ALB / `AWSELB` for CLB which is delivered to the end-user
-- This cookie has a duration defined between 1 sec and 7 days
-- When the user accesses the LB, it provides the cookie to the LB
-- The LB than can decide to route the connection to the same backend instance every time while the cookie is not expired
-- Change of the backed instance if the cookie is present:
-    - If the instance to which the cookie maps to fails, then a new instance will be selected
-    - If the cookie expires => the cookie will be removed, new cookie is created while a new instance is chosen
-- Session stickiness problems: load can become unbalanced
-- Enable session stickiness if an application does't use external sessions
+## 3) Cross-Zone Load Balancing (교정 + 시험 함정)
 
-## Connection Draining and Deregistration Delay
+* 개념: **어느 AZ의 LB 노드든 전체 AZ의 타깃에 균등 분산** 가능.
+* 효과: AZ별 타깃 수가 달라도 **불균형 완화**.
 
-- Connection draining a setting which controls what happens when instances are unhealthy or deregistered
-- Default behavior: LB closes all connections and the instance receives no new connections
-- Connections draining allows in-flight requests to complete for a certain amount of time, while no new connections are sent to the instance
-- Connection draining is supported on Classic Load Balancers only! It is defined on the load balancer itself
-- Connection draining is a timeout between 1 and 3600 seconds (default 300)
-- If the instance become unhealthy because if a failed health check, connection draining settings do not apply to it
-- If an instance is taken out of service manually or by an ASG, it is listed "InService: Instance deregistration currently in progress". If we use an ASG, it will wait for all connections to complete before terminating or for the timeout value
-- Deregistration delay is essentially the same feature as connection draining, but it is supported by ALB, NLB and GWLBs
-- It is defined on target groups, not on the LB
-- It works by stopping sending connections to deregistering targets. Existing connections can continue until thy complete naturally or the deregistration delay is reached
-- Deregistration delay is enabled by default on all the new LBs, default value for it is 300 seconds (configurable between 0-3600 seconds)
+✅ 시험에서 자주 나오는 함정
 
-## `X-Forwarded-For` and PROXY protocol
+* Cross-zone을 켜면 **AZ 간 트래픽이 생길 수 있음** → 데이터 전송 비용/지연 고려 포인트로 출제 가능.
+* “트래픽이 특정 AZ에만 쏠린다” → Cross-zone 고려.
 
-- In case a client connects to a backend without any load balancing in the front of the backend, the IP address of the client is visible and can be recorded
-- With load balancers this can be more complicated, this is where `X-Forwarded-For` header and the PROXY protocol become handy
-- `X-Forwarded-For` is a HTTP header, it only works with HTTP/HTTPS. This is a layer 7 header.
-- This header is added/appended by proxies/load balancers. It can have multiple values in case the request is passing multiple proxies/load balancers. E.g X-Forwarded-For: 1.3.3.7(ClientIP), proxy1, proxy2..
-- The backend server needs to be aware of this header and needs to support it
-- Supported on CLB and ALB, NLB does not supports it because they don't support the layer 7 of the OSI stack.
-- PROXY protocol works at Layer 4, it is an additional layer 4 (tcp) header => works with a wide range or protocols (including HTTP/HTTPS)
-- There are 2 versions of PROXY protocol:
-    - v1: human readable, works with CLB
-    - v2: binary encoded, works with NLB
-- v2 can support an unbroken HTTPS connection (tcp listener). Use case for this: end to end encryption
-- When using PROXY protocol, we can add a HTTP header, the request is not decrypted
+---
+
+## 4) 세션 상태(Session State)와 “스티키”의 의미
+
+* 세션 상태는 사용자별 서버 측 상태(장바구니, 로그인 상태 등).
+* **상태를 인스턴스 로컬에 두면** 스케일/장애 시 문제가 생기므로:
+
+  * 외부 세션 저장소(예: **ElastiCache/Redis, DynamoDB, RDS**)로 빼서 **Stateless** 로 만드는 게 정석.
+
+✅ SAP 관점 포인트
+
+* “스티키 세션으로 해결”은 **임시/차선**인 경우가 많고, “확장성/DR/무중단” 요구가 있으면 **외부 세션**이 정답인 경우가 많습니다.
+
+---
+
+## 5) ELB 종류/진화: CLB vs ALB vs NLB (정확 표현)
+
+### CLB (Classic, v1)
+
+* L4/L7 혼합처럼 보이지만 **HTTP 기능 기반 라우팅은 약함**(호스트/경로 규칙 같은 것 불가).
+* 과거 시스템 호환/레거시에서만 고려.
+
+### ALB (Application, v2, L7)
+
+* 프로토콜: **HTTP/HTTPS, WebSocket**
+* 기능: **규칙 기반 라우팅(호스트/패스/헤더/쿼리/메서드 등)**, 리다이렉트, 고정 응답, OIDC/Cognito 인증 등
+* **TLS 종료(Termination)** 가 기본 패턴
+
+  * “LB에서 TLS 종료 후 백엔드로 HTTP” 또는 “LB→백엔드도 HTTPS” 가능
+  * 다만 “완전한 패스스루(복호화 없이 그대로)”가 필요하면 NLB를 고려
+
+### NLB (Network, v2, L4)
+
+* 프로토콜: **TCP, TLS, UDP, TCP_UDP**
+* 특징:
+
+  * 초저지연/고성능, 대규모 연결 처리에 유리
+  * **고정 IP(EIP) 또는 고정 IP 유사 요구(화이트리스트)** 에 강함
+  * **TLS 패스스루/엔드투엔드 암호화** 시나리오에 자주 쓰임
+  * **PrivateLink**(Endpoint Service)와 결합 포인트
+
+⚠️ 노트 보정(중요)
+
+* “NLB 헬스체크는 ICMP” → 일반적으로 NLB 타깃 그룹 헬스체크는 **TCP/HTTP/HTTPS** 를 사용합니다. (ICMP는 보통 ELB 헬스체크로 이야기하지 않습니다.)
+
+  * 시험에서는 “TCP 핸드셰이크 기반으로 확인 가능” 정도로 기억하면 안전.
+
+---
+
+## 6) “ALB는 느리다 → 성능이면 NLB” 표현 보정
+
+* 방향성은 맞지만, 시험에서는 보통 이렇게 묻습니다:
+
+  * **초저지연/수백만 RPS/고정 IP/패스스루** → NLB
+  * **HTTP 기능 기반 라우팅/인증/리다이렉트/WAF 연계** → ALB
+* 단순히 “성능”만 나오면 애매할 수 있으니, **요구사항 키워드(고정 IP, TCP/UDP, 패스스루, L7 룰)** 로 판단하세요.
+
+---
+
+## 7) 스티키 세션 (정확 포인트)
+
+* ALB: 타깃 그룹 단위로 stickiness 설정 가능(쿠키 기반)
+* CLB: LB 단위로 설정
+* 쿠키:
+
+  * ALB: `AWSALB` 계열 쿠키를 사용(설정/모드에 따라 변형 존재)
+  * CLB: `AWSELB`
+
+✅ 시험 포인트
+
+* 스티키는 **부하 불균형**을 만들 수 있고, 장애/스케일링/배포 전략에서 발목을 잡을 수 있음.
+* “세션 유지가 필요” → 1순위는 **외부 세션 저장소**, 2순위가 **stickiness**.
+
+---
+
+## 8) Connection Draining vs Deregistration Delay (좋은 정리, 시험형으로 재정렬)
+
+* **CLB**: Connection Draining (LB 설정)
+* **ALB/NLB/GWLB**: Deregistration Delay (타깃 그룹 설정)
+
+동작:
+
+* 드레이닝/딜레이 동안 **새 연결은 안 보냄**
+* 기존 연결은 **자연 종료** 또는 **타임아웃 도달 시 종료**
+* 기본값 300초, 0~3600초 범위에서 조정 가능
+
+---
+
+## 9) `X-Forwarded-For` vs PROXY protocol (핵심만 정확히)
+
+* `X-Forwarded-For`
+
+  * L7(HTTP 헤더)
+  * **ALB/CLB** 에서 주로 사용
+  * 백엔드 앱이 이 헤더를 신뢰/파싱하도록 설정 필요
+
+* PROXY protocol
+
+  * L4(TCP 상단에 붙는 프록시 메타데이터)
+  * NLB에서 자주 언급(특히 **PROXY v2**)
+  * **패스스루(TLS 종료를 LB에서 안 하는 경우)** 에도 “원 클라이언트 정보 전달” 요구로 등장
+
+✅ 시험 포인트
+
+* “클라이언트 원 IP를 백엔드 로그에 남겨야 한다”
+
+  * HTTP 기반이면 `X-Forwarded-For`
+  * TCP/TLS 패스스루면 PROXY protocol 고려
+
+---
+
+## SAP-C02에서 ELB 관련 “정답 키워드” 매핑 (암기용)
+
+* **고정 IP / 클라이언트 화이트리스트 / 초저지연 / TCP·UDP / TLS 패스스루 / PrivateLink** → **NLB**
+* **호스트/경로 기반 라우팅 / WAF / OIDC·Cognito 인증 / 리다이렉트 / HTTP 헤더 기반 제어** → **ALB**
+* **무중단 배포/축소 시 연결 유지** → (CLB면 Draining) / (v2면 Deregistration delay)
+* **세션 유지 요구** → 외부 세션 저장소(정답 우선) + 필요 시 stickiness
