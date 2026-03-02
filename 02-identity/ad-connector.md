@@ -1,23 +1,23 @@
-# AD Connector (Directory Services)
+# AD Connector(디렉터리 서비스)
 
-- AD Connector provides a pair of directory endpoints in a VPC
-- It injects ENIs into to subnets in a VPC
-- Once injected AD connector appears as a native directory to other AWS instances capable of using a directory service
-- Redirects requests to an existing on-premise directory server, which means no directory data is stored in AWS
-- AD connector allows us to use AWS services which do require an AD directory (such as Workspaces) and use this with an on-premises directory service => we don't need to deploy additional AD directory in AWS
-- There are 2 sizes of directory services *small* and *large*, while there are no explicit user limits, the chosen size does impact the amount of compute allocated by AWS for the connector
-- We can use multiple connector to distribute the load
-- AD directory is placed in 2 subnets in a VPCs in different availability zones => resilient to AZ failure
-- The connector should be configured to point to at least one on-premise directory service => we need to provide account information for the connector to be able to authenticate itself
-- Requires a working network to on-premise service, otherwise wont work (private network via Direct Connect or VPN)
+* **AD Connector**는 VPC 내에 **2개의 디렉터리 엔드포인트**(페어)를 제공합니다.
+* VPC의 **서브넷에 ENI(Elastic Network Interface)** 를 주입(inject)합니다.
+* 주입 후 AD Connector는 **디렉터리 서비스를 사용할 수 있는 다른 AWS 인스턴스 입장에서는 네이티브 디렉터리처럼** 보입니다.
+* 요청을 **기존 온프레미스 디렉터리 서버로 리다이렉트**하며, 따라서 **디렉터리 데이터는 AWS에 저장되지 않습니다.**
+* **AD 디렉터리가 필요한 AWS 서비스(예: Amazon WorkSpaces)** 를 온프레미스 디렉터리와 연동해 사용할 수 있게 해주므로, **AWS에 별도의 AD를 추가로 배포할 필요가 없습니다.**
+* 디렉터리 서비스 크기는 **small / large** 2가지입니다. 명시적 사용자 제한은 없지만, **선택한 크기에 따라 AWS가 커넥터에 할당하는 컴퓨트 자원 규모가 달라집니다.**
+* **여러 개의 커넥터를 구성**하여 부하를 분산할 수 있습니다.
+* AD 디렉터리는 VPC의 **서로 다른 2개 AZ에 속한 2개 서브넷에 배치**되어, **AZ 장애에 대한 복원력**을 제공합니다.
+* 커넥터는 **최소 1개 이상의 온프레미스 디렉터리 서비스**를 가리키도록 구성해야 하며, 커넥터가 인증할 수 있도록 **계정 정보(자격 증명)** 를 제공해야 합니다.
+* 온프레미스 서비스로의 **네트워크 연결이 정상 동작**해야 하며, 그렇지 않으면 동작하지 않습니다. (예: **Direct Connect** 또는 **VPN** 기반 사설 연결)
 
-## AD Connector Architecture
+## AD Connector 아키텍처
 
 ![AD Connector](images/DirectoryServiceADConnector.png)
 
-## Use cases for AD Connector
+## AD Connector 사용 사례(Use cases)
 
-- Prof of concept projects, we don't want to move our Active Directory to AWS for it
-- We have a small infrastructure in AWS and we don't want to move the Active Directory to AWS
-- Legal/compliance reasons - we don't want to store user info in AWS
-- For larger requirements use AWS Directory Service
+* **PoC(개념 검증)** 프로젝트에서 Active Directory를 AWS로 이전하고 싶지 않을 때
+* AWS 내 인프라 규모가 작아 **AD를 AWS로 옮길 필요가 없을 때**
+* **법적/컴플라이언스** 사유로 **사용자 정보를 AWS에 저장하고 싶지 않을 때**
+* 더 큰 요구사항(확장성/기능)이 필요하면 **AWS Directory Service** 사용 고려
