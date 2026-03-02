@@ -1,213 +1,259 @@
 # EC2
 
-## EC2 Purchase Options (Launch Types)
+## EC2 구매 옵션(런치 타입)
 
-- **On-Demand (default)**:
-    - Average of anything, no specific cons or pros
-    - On-demand instances are isolated but multiple customer instances run on a shared hardware
-    - Multiple instance types (different sizes) can run on the same EC2 hosts, consuming a different allocation of resources
-    - Billing: per-second billing while an instance is running, if a system is shut down, we don't get billed for that
-    - Associated resources such as storage consume capacity, we will be billed regardless the instance is running or it is stopped
-    - We should always start the evaluation process using on-demand
-    - With on-demand there are no interruptions. We start an instance and it should run as long as we don't decide to shut it down
-    - In case of resource shortage the reserved instances receive highest priority, consider them instead of on-demand in case of business critical systems
-    - On-demand offers predictable pricing without any discount options
-    - If you are unsure of duration or type of workload, On-demand should be considered.
-- **Spot instances**:
-    - Cheapest way to get EC2 compute capacity
-    - Spot pricing is selling EC2 capacity at lower price in order make use of spare EC2 capacity on the host machines
-    - If the spot price goes above selected maximum price, our instances are terminated
-    - We should never use the spot instances for workloads which can't tolerate interruptions
-    - Anything which can tolerate interruptions and can be re-triggered is good for spot
-- **Standard Reserved Instances**:
-    - On-demand is generally used for unknown or short term usage, reserved is for long term consistent usage of EC2
-    - Reservations:
-        - They are commitments that we will use a instance/set of instances for a longer amount of time
-        - The effect of a reservation is to reduce the per second cost or remove it entirely
-        - Reservation needs to be planned in advance
-        - We pay for unused reservations
-        - Reservations can be bought for a specific type of instances. They can be region and AZ locked
-        - Az locked instances reserve EC2 capacity
-        - If an instance is reserved for a region,it doesn't reserve capacity but it can benefit any instances launched in any AZ in that region.
-        - Reservations can have a partial effects in a sense the we can get discounts for larger instances compared to which the reservation was purchased
-        - We can commit to reservations of 1 year of 3 years
-        - Payment structures:
-            - No upfront: we pay per second a lower amount of fee compared to on-demand. We pay even if the instance is not used
-            - All upfront: the whole cost of the 1 or 3 years. No second per fee payment will be required. Offer the greatest discount
-            - Partial upfront: we pay a reduced fee upfront for smaller per second usage
-    - Reserved instances are good for components which have known usage, require consistent access for compute for a long term basis
-- **Scheduled Reserved Instances**:
-    - Great for long term requirements which does not run constantly, ex. batch processing running 5 hours/day
-    - For scheduled reserved instances we specify a time window. The capacity can be used only during the time window
-    - Limitations: 
-        - Does not support all kind of instance types
-        - Minimum purchase per year is 1200 hours, minimum commitment is 1 year
-- **Dedicated Hosts**:
-    - They are EC2 hosts allocated to a customer entirely
-    - They are hosts designed for specific instances, ex. A, C, R, etc.
-    - Hosts come with all of the resources we expected from a physical machine: number of cores and CPUs, memory, local storage and connectivity
-    - We pay for the host, we don't pay anymore for instance usage per second in case we launch instances on the host
-    - We have a capacity for a dedicated hosts, we can launch different sizes of instances based on the available capacity
-    - Reasons for dedicated hosts: we want to use software which is licensed for number of cores or number of sockets
-    - Host affinity: feature of dedicated hosts. Links instances to hosts, if we stop and start the instance, it will remain on the same host
-    - Only our instances will run on a dedicated hosts
-    - Capacity management:
-        - We have to manage our capacity in terms of under utilization of the host
-        - We have a limited capacity in terms of how many EC2 instances we can launch
-- **Dedicated Instances**:
-    - Our instances run on an EC2 host with other instances of ours. The host is not shared with other AWS customers, no other customers will use the same hardware
-    - We don't pay for the host, nor do we share the host
-    - There are some extra fees for this kind of purchase option:
-        - One-of hourly fee for any regions in which we are using dedicated instances
-        - There is a fee for the dedicated instances themselves
-    - Dedicated instances are common in industries where we cannot share hardware
-    - No extra capacity management required from us
+* **온디맨드(On-Demand, 기본)**
 
-## Capacity Reservations
+  * 필요할 때 바로 사용하며, 할인/약정 없이 표준 과금(장단점이 “평균적”인 기본 옵션)
+  * 온디맨드 인스턴스는 격리되어 동작하지만, 물리 하드웨어는 여러 고객이 공유할 수 있음
+  * 하나의 EC2 호스트에서 서로 다른 인스턴스 타입(서로 다른 크기)이 함께 구동되며, 각기 다른 리소스 할당을 소비
+  * 과금: 인스턴스가 **Running** 상태인 동안 초 단위 과금(인스턴스를 **Stop** 하면 컴퓨팅 과금은 중지)
+  * 단, 스토리지(EBS 등) 같은 연결 리소스는 인스턴스가 중지되어도 계속 과금(용량 기반)
+  * 일반적으로 평가/검증은 온디맨드로 시작하는 것이 기본
+  * 중단(인터럽트) 없음: 사용자가 중지/종료하지 않는 한 계속 실행
+  * 리소스 부족 상황에서 “용량 보장”이 중요하면 별도 용량 확보 수단(예: **Capacity Reservation**)을 고려
+  * 예측 가능한 가격이지만 자체 할인 옵션은 없음
+  * 워크로드 기간/형태가 불확실하면 온디맨드가 우선 후보
 
-- AWS prioritizes any scheduled commitment for delivering EC2 capacity
-- After scheduled instances on-demand is prioritized
-- The leftover capacity can be used for spot instances
-- Capacity reservation is different compared to reserved instances
-- Regional reservation 
-    - Provides a billing discount for valid instances launched in any AZ in that region
-    - While this is flexible, region reservation don't reserve capacity within az AZ - risky if the capacity is limited during a major fault
-- Zonal reservation: 
-    - Same billing discount as for region reservation, but the reservation applies only to specific AZs
-- Regional/zonal reservation commitment is 1 or 3 years
-- On-Demand capacity reservation: can be booked to ensure we always have access to capacity in an AZ when we need it but at full on-demand price. No term limits, but we pay regardless if we consume the reservation or not
-- Capacity reservations do not provide any billing benefit, we just reserve the capacity for EC compute
+* **스팟(Spot) 인스턴스**
 
-## EC2 Savings Plan
+  * EC2 컴퓨팅을 가장 저렴하게 확보하는 방식
+  * AWS의 유휴(spare) 용량을 낮은 가격으로 판매
+  * 스팟 가격이 사용자가 설정한 최대 가격을 초과하면 인스턴스가 회수(중단/종료)될 수 있음
+  * 중단을 허용할 수 없는 워크로드에는 사용하지 말아야 함
+  * 중단되어도 재시도/재실행 가능한 배치, 비동기, 내결함성 작업에 적합
 
-- A hourly commitment for 1 or 3 years term
-- Saving Plan can be 2 different types:
-    - General compute dollar amounts: we can save up to 66% version on-demand
-    - EC2 Saving Plan: up to 72% saving for EC2
-    - SageMaker savings plan: reduces costs up to 64% for SageMaker usage. Applies to Sagemaker ML instances (ml.t3, ml.m5, ml.m5d)
-- General compute savings plan currently apply to EC2, Fargate and Lambda
-- Resource usage consumes savings plan commitment at the reduced saving plans rate, beyond commitment on-demand billing is used
+* **표준 예약 인스턴스(Standard Reserved Instances, RI)**
 
-## EC2 Networking
+  * 온디맨드: 단기/불확실 사용에 적합, RI: 장기간/일관된 사용에 적합
+  * 예약(Reservation)의 의미: 특정 인스턴스 사용을 1년 또는 3년 단위로 약정하여 비용을 절감
+  * 효과: 초당 단가를 낮추거나(실무적으로는 “크게 할인”) 장기 비용을 절감
+  * 사전 계획이 필요
+  * 사용하지 않아도 약정 비용을 지불(“미사용 예약” 비용 발생)
+  * 구매 시 인스턴스 패밀리/타입, 리전/가용영역(AZ) 범위를 기준으로 적용됨
 
-- Instances are created with a primary ENI, this can not be removed or detached from the instance
-- Secondary ENIs can be added to an instance which can be in different subnets (NOT AZs!)
-- Secondary ENIs can be detached and attached to other instances
-- Security Groups are associated with an ENI, not an EC2 instances
-- Every instances is allocated a primary private IPv4 address from the subnet range. This IP address remains the within the lifetime of EC2 instance
-- The primary IP address is exposed to the OS
-- ENIs can also have one or more secondary IP addresses depending on the instance type
-- Public IP address is allocated to the instance if we launch it in a subnet where this is enabled or we explicitly enable a primary address to the instance. These public IP addresses are dynamic and they can change if the EC2 instance is moving to another EC2 host
-- Public IPs are not visible to the OS
-- In order to get static public IP addresses, we can associate an Elastic IP to the instance
-- We can allocate one public IP per private IP
-- We get charged if the Elastic IPs are not associated to instances
-- ENIs can have 1 or more IPv6 addresses, 1 MAC address and 1 or more Security Groups
-- IPv6 addressing if enabled, all the IPv6 addresses are publicly routable
-- IPv6 addresses are always visible to the OS
-- Source/destination checks: each ENI has a flag which can be disabled
-- By default source/destination check is enabled, if disabled the ENI can process traffic which was not created by the EC2 instances or traffic for which the EC2 instance is not the destination
+    * **Zonal RI(AZ 고정)**: 해당 AZ에서 용량 예약(capacity reservation) 혜택이 포함될 수 있음(용량 측면에서 유리)
+    * **Regional RI(리전 범위)**: 리전 내 모든 AZ에 유연 적용되지만, 일반적으로 “용량 보장”은 아님(할인 중심)
+  * 일부 유연성: 구매한 스펙과 다른 크기 인스턴스에도 “정규화(normalization)” 규칙에 따라 할인 적용이 가능한 경우가 있음
+  * 결제 방식
 
-## Bootstrapping and AMI Baking
+    * 선결제 없음(No upfront): 사용 여부와 무관하게 약정 기간 동안 할인된 단가로 과금(지속 과금)
+    * 전액 선결제(All upfront): 1년/3년 비용을 한 번에 지불, 가장 큰 할인
+    * 부분 선결제(Partial upfront): 일부 선지불 + 나머지는 할인 단가로 과금
+  * 사용처: 장기간 항상 켜져 있어야 하는 핵심 컴포넌트(예: 상시 웹/앱 서버, 베이스라인 처리 등)
 
-- Bootstrapping:
-    - Is a way of building EC2 instances in a flexible way. Isn't fast, but super flexible.
-    - Flexible, automated building of EC2 instances
-    - We provision EC2 instances and add a script to the user data
-    - CloudInit runs the script on the instance when the instance is launched
-    - This process can longer time, although it is very flexible
-    - When finished, ec2 instance is ready to use.
-- AMI Baking:
-    - We front-load the time and effort required to configure an instance
-    - Our aim is to get the instance ready or almost ready at this point of the process. We can use bootstrapping to install the software and make the instance ready.
-    - We launch an EC2 instance and perform the necessary tasks from which we can create an AMI
-    - We can use the AMI to deploy many instances quickly.
-    - The tradeoff is, it harder to change the AMI.
-    - AMI baking and bootstrappig are not mutually exclusive.
-    - <span style="color: orange;">If there are any exam question related to time taken to launch the EC2 instance, think of AMI baking.</span>
+* **스케줄드 예약 인스턴스(Scheduled Reserved Instances)**
 
-## EC2 Placement Groups
+  * “항상 켜진 건 아닌데” 장기적으로 반복되는 사용(예: 매일 5시간 배치)에서 유리
+  * 사용 가능한 시간 창(time window)을 지정하고 그 시간에만 용량을 사용
+  * 제약
 
-- Allow us to influence EC2 instance placements, insuring that instances are closed together or not
-- There are 3 types of placements groups in AWS:
-    - **Cluster**: any instances in a single placement groups are physically close
-    - **Spread**: instances are all using different underlying hardware
-    - **Partition**: groups of EC2 instances which are spread apart on different host hardware
+    * 모든 인스턴스 타입을 지원하지 않음
+    * 연간 최소 1200시간, 최소 약정 1년 등 조건이 있음
 
-### Cluster Placement Groups
+* **전용 호스트(Dedicated Hosts)**
 
-- Used for highest possible performance
-- Best practice is to launch all of the instances at the same time which will be part of the placement group. This ensures that AWS allocates capacity in the same location
-- Cluster placement groups are located in the same AZ, when the first instance is launched, the AZ is locked
-- Ideally the instances in a cluster placement group are located on the same rack, often on the same EC2 host
-- All instances have fast direct bandwidth between each other (they can achieve single stream transfer rate of 10Gbps vs 5Gbps which is achievable normally)
-- They offer the lowest latency possible and max PPS(packets per second) possible in AWS
-- To achieve these levels of performance we need to use instances with high performant networking: instances with more bandwidth and with Enhanced Networking
-- Cluster placement groups should be used for highest performance. They offer no HA and very little resilience
-- Considerations for cluster placement groups: <span style="color: #ff5733;">Important for EXAM!!!</span>
-    - We can not span over AZs, the AZ is locked when the first instance is launching
-    - We can span over VPC peers, but this will impact performance negatively
-    - Cluster placement groups are not supported for every instance type
-    - *Recommended*: use the same type of instances and launch them at the same time
-    - Cluster placement groups offer 10 Gbps for single stream performance
-    - Use cases: High performace, fast speeds, low latency
+  * 고객 전용으로 EC2 물리 호스트 자체를 할당받음(호스트 레벨 전용)
+  * 특정 인스턴스 패밀리(A, C, R 등) 지원 범위 내에서 사용
+  * 물리 서버 수준 리소스(코어/소켓, 메모리, 로컬 스토리지, 네트워크)를 단위로 제공
+  * 과금: “호스트”에 대해 지불(호스트 위에 올리는 인스턴스의 초당 사용료 개념이 달라짐)
+  * 호스트 용량 내에서 다양한 크기의 인스턴스를 배치 가능
+  * 주 사용 이유: 코어/소켓 수 기반 라이선스(상용 SW) 요구사항 대응
+  * **Host affinity**: 인스턴스를 특정 호스트에 고정. 중지/시작 후에도 같은 호스트로 복귀
+  * 전용 호스트에는 내 인스턴스만 실행
+  * 용량 관리 필요
 
-### Spread Placement Groups
+    * 호스트 과다/과소 사용(under-utilization) 리스크를 사용자가 관리
+    * 호스트 용량 한계로 인해 올릴 수 있는 인스턴스 수/사이즈 제한이 발생
 
-- They offer the maximum possible availability and resiliency
-- They can span multiple AZs
-- Instances in the same spread placement group are located on different racks, having isolated networking and power supplies
-- There is a limit for 7 instances per AZ in case of spread placement groups. This is because each instance is a completely separate instance rack 
-- Considerations: <span style="color: #ff5733;">Important for EXAM!!!</span>
-    - Spread placement provides infrastructure isolation
-    - Hard limit: 7 instances per AZ
-    - We can not use dedicated instances or hosts
-    - Use cases: Small number of critical instances that need to be kept seperated from each other. May be mirrors of file server, or may be different domain controllers within an organization.
+* **전용 인스턴스(Dedicated Instances)**
 
-### Partition Placement Groups
+  * 내 인스턴스만 올라가는 전용 하드웨어에서 실행(다만 “호스트를 직접 구매”하는 모델은 아님)
+  * 같은 전용 호스트에는 “내 인스턴스들끼리”는 함께 올라갈 수 있음(타 고객과는 미공유)
+  * 추가 과금 요소
 
-- Similar to spread placement groups
-- They are designed for situations when we need more than 7 instances per AZ but we still need separation
-- Can be created across multiple AZs in a region
-- At creation we specify the number of partition per AZ (max 7 per AZ)
-- Each partition has its own rack with isolated power and networking
-- We can launch as many instances as we need in a partition group. We can select the partition by hand or we can let EC2 decide on a partition for a new instance
-- Use cases for partition groups: HDFS, HBase, Cassandra, topology aware applications<span style="color: #ff5733;">Important for EXAM!!!</span>
-- Instances can be placed in a specific partition or we can let AWS to decide
-- Offer visibility in partitions and you can see which instance is in which partition.
+    * 전용 인스턴스를 사용하는 리전에 대해 1회/시간 단위 등의 추가 요금(정책에 따라 다름)
+    * 전용 인스턴스 자체의 비용
+  * 하드웨어 공유가 금지된 산업 규제 환경에서 흔함
+  * 전용 호스트처럼 세밀한 호스트 용량 관리를 직접 하지 않아도 됨
 
-## EC2 Spot Instances
+---
 
-- Can get a discount of up to 90% compared to On Demand instances
-- We can define a max spot price and get he instance of our price is bigger than the current price
-- If the current spot price goes beyond our max price, we can choose to stop or terminate the instance within 2 minutes grace period
-- If we don't want our spot instance to be reclaimed by AWS, we can use a **Spot Block**
-    - We can block a spot instance during a specified time frame (1 to 6 hours) without interruptions
-    - In rare situations the instance may be reclaimed
-- Use cases for spot instances: batch jobs or workloads that are resilient to failure
-- We can launch spot instances with a spot request. A spot request contains the following information:
-    - Maximum price
-    - Desired number of instances
-    - Launch specification
-    - Request type: on-time, persistent
-    - Valid from, valid until
-- Request types:
-    - One time request: as soon as the request is fulfilled, the request will go away
-    - Persistent request: the number of instances is attempted to be kept even if some instances are reclaimed, meaning that the request will not go away as soon as it is completed first time
-- Canceling a spot instances: in order ot cancel a spot instance, it has to be in an **open**, **active** or **disabled** state
-- Spot instance states:
-    ![Spot instance states](images/spot_request_states.png)
-- Cancelling a spot request, it will not terminate the instances themselves. In order to terminate instances, first we have to terminate the spot request, if there is one active
+## 용량 예약(Capacity Reservations)
 
-## Spot Fleets
+* AWS는 “예약/커밋된 용량”을 우선적으로 보장하려고 함(스케줄/약정 기반이 우선)
+* 이후 일반 온디맨드가 사용되고, 남는 용량이 스팟에 활용됨
+* **Capacity Reservation은 Reserved Instance와 다름**
+* **Regional RI(리전 RI)**
 
-- Spot Fleet - set of spot instances + (optional) on-demand instances
-- The spot fleet will try to meet the target capacity with price constraints
-- A launch pool can have the following can have different instance types, OS, AZ
-- We can have multiple launch pools, so the fleet can choose the best
-- Spot fleet will stop launching instances the target capacity is reached
-- Strategies to allocate spot instances:
-    - **lowestPrice**: the spot fleet will launch instances from the pool with the lowest price
-    - **diversified**: distribute instances across all pools
-    - **capacityOptimized**: launch instances based on the optimal capacity for the number of instances
-- Spot fleets allow us to automatically request spot instances with the lowest price
+  * 리전 내 어떤 AZ에서 시작한 “조건에 맞는 인스턴스”에도 할인 적용
+  * 유연하지만, 특정 AZ의 용량을 직접 보장하지는 않음 → 장애/수요 급증 시 특정 AZ 용량이 부족하면 리스크
+* **Zonal RI(AZ RI)**
+
+  * 리전 RI와 유사한 할인 + 특정 AZ에 적용(용량 측면에서 더 강함)
+* Regional/Zonal RI 약정은 1년 또는 3년
+* **온디맨드 용량 예약(On-Demand Capacity Reservation)**
+
+  * 특정 AZ에서 필요할 때 항상 용량을 확보하기 위한 수단
+  * 단가 할인 없이 온디맨드 가격 그대로 과금
+  * 기간 약정 없음(필요한 동안 유지 가능)
+  * 예약을 실제로 쓰지 않아도 비용이 발생
+* 정리: **Capacity Reservation은 “비용 절감”이 아니라 “용량 확보” 목적**(할인 자체는 제공하지 않음)
+
+---
+
+## EC2 세이빙 플랜(Savings Plan)
+
+* 1년 또는 3년 동안의 **시간당(USD/시간) 사용 약정**
+* 유형
+
+  * **Compute Savings Plans**: 온디맨드 대비 최대 약 66% 절감(EC2/Fargate/Lambda에 폭넓게 적용)
+  * **EC2 Savings Plans**: EC2에 최적화, 최대 약 72% 절감(적용 범위는 더 제한적)
+  * **SageMaker Savings Plans**: SageMaker 사용 비용 최대 약 64% 절감(해당 ML 인스턴스에 적용)
+* 사용량은 약정 금액까지 세이빙 플랜 단가로 소진되고, 초과분은 온디맨드로 과금
+
+---
+
+## EC2 네트워킹
+
+* 인스턴스는 생성 시 **기본(primary) ENI**가 붙으며, 이는 제거/분리 불가
+* **보조(secondary) ENI**를 추가할 수 있음(서로 다른 서브넷 가능, 단 **AZ를跨ぐ 것은 불가**)
+* 보조 ENI는 분리 후 다른 인스턴스에 연결 가능
+* 보안 그룹(Security Group)은 **EC2 인스턴스가 아니라 ENI에 연결**됨
+* 모든 인스턴스는 서브넷 범위에서 **기본 프라이빗 IPv4**를 1개 할당받고, 인스턴스 생명주기 동안 유지
+* 기본 프라이빗 IP는 OS에 노출됨
+* 인스턴스 타입에 따라 ENI에 **보조 프라이빗 IP**를 여러 개 추가 가능
+* 퍼블릭 IPv4는 (서브넷 설정/인스턴스 설정에 따라) 자동 할당 가능하며, **동적**이라 호스트 이동/재시작 등에 따라 변경될 수 있음
+* 퍼블릭 IP는 일반적으로 OS에 직접 보이지 않음
+* 고정 퍼블릭 IP가 필요하면 **Elastic IP(EIP)**를 연결
+* 프라이빗 IP 1개당 퍼블릭 IP 1개 매핑 가능
+* EIP는 인스턴스에 미연결 상태면 과금 발생
+* ENI는 IPv6 주소(여러 개 가능), MAC 주소(1개), 보안 그룹(여러 개) 등을 가질 수 있음
+* IPv6를 활성화하면 IPv6 주소는 기본적으로 퍼블릭 라우팅 가능
+* IPv6는 OS에서 항상 확인 가능
+* **Source/Destination check**: ENI 단위 플래그
+
+  * 기본값은 활성화(Enable)
+  * 비활성화(Disable) 시 해당 인스턴스가 “자기 목적지가 아닌 트래픽”도 처리 가능(예: NAT 인스턴스, 라우팅/방화벽 어플라이언스)
+
+---
+
+## 부트스트래핑과 AMI 베이킹
+
+* **부트스트래핑(Bootstrapping)**
+
+  * 유연하게 EC2를 구성하는 방식(유연하지만 빠르진 않음)
+  * 인스턴스를 띄우고, user data에 스크립트를 넣음
+  * Cloud-init이 부팅 시 스크립트를 실행
+  * 시간이 걸릴 수 있지만 자동화/유연성이 큼
+  * 완료되면 인스턴스가 사용 준비 상태가 됨
+
+* **AMI 베이킹(AMI Baking)**
+
+  * 인스턴스 구성에 필요한 작업을 “미리” 수행해 AMI로 굳혀두는 방식
+  * 목표: 시작 시점에 이미(또는 거의) 준비된 상태로 빠르게 배포
+  * EC2를 하나 띄워 필요한 설치/설정을 수행 → 그 상태로 AMI 생성
+  * 생성한 AMI로 다수 인스턴스를 빠르게 배포 가능
+  * 단점: AMI 변경이 번거로움(재베이킹 필요)
+  * AMI 베이킹과 부트스트래핑은 함께 사용 가능
+  * **시험 팁**: “EC2 기동 시간이 중요”하면 AMI 베이킹을 우선 연상
+
+---
+
+## EC2 배치 그룹(Placement Groups)
+
+* EC2 인스턴스 배치를 제어하여 “가깝게” 또는 “분산되게” 배치하도록 영향
+* 유형 3가지
+
+  * **클러스터(Cluster)**: 인스턴스를 물리적으로 가깝게 배치
+  * **스프레드(Spread)**: 인스턴스를 서로 다른 하드웨어로 최대 분산
+  * **파티션(Partition)**: 여러 파티션(격리 단위)로 분산 배치
+
+### 클러스터 배치 그룹(Cluster)
+
+* 최고 성능(저지연/고대역폭) 목적
+* 베스트 프랙티스: 같은 배치 그룹에 넣을 인스턴스는 **가능하면 동시에** 띄워서 같은 위치 용량을 확보
+* 동일 AZ 내에 존재(첫 인스턴스 생성 시 AZ가 사실상 고정)
+* 이상적으로 같은 랙, 때로는 같은 호스트에 배치
+* 인스턴스 간 대역폭/지연이 매우 유리(고성능 네트워킹 인스턴스 + Enhanced Networking 권장)
+* 단점: HA/복원력 거의 없음(한 AZ/한 랙 리스크)
+* 시험 포인트
+
+  * AZ를跨울 수 없음(잠김)
+  * VPC 피어링跨도 가능은 하지만 성능 저하
+  * 모든 인스턴스 타입이 지원되진 않음
+  * 같은 타입을 동시에 띄우는 것이 권장
+  * 사용처: HPC, 초저지연, 대규모 동서 트래픽
+
+### 스프레드 배치 그룹(Spread)
+
+* 최고 가용성/복원력(물리 분리) 목적
+* 여러 AZ에 걸쳐 구성 가능
+* 같은 스프레드 그룹의 인스턴스는 서로 다른 랙(전원/네트워크 분리)
+* **AZ당 최대 7개 인스턴스 제한**(하드 리밋)
+* 시험 포인트
+
+  * 인프라 격리 제공
+  * AZ당 7개 제한
+  * 전용 인스턴스/전용 호스트와 함께 사용 불가(제약 존재)
+  * 사용처: 소수의 매우 중요한 인스턴스(예: 도메인 컨트롤러, 핵심 파일 서버 미러 등)
+
+### 파티션 배치 그룹(Partition)
+
+* 스프레드와 유사하되, **AZ당 7개를 넘는 규모**에서도 격리를 제공
+* 리전 내 여러 AZ에 걸쳐 생성 가능
+* 생성 시 AZ당 파티션 수 지정(최대 7)
+* 각 파티션은 독립 랙(전원/네트워크 격리)
+* 파티션 내 인스턴스 수는 필요만큼 가능(파티션은 수동 지정 또는 EC2가 자동 선택)
+* 사용처: HDFS, HBase, Cassandra 같은 토폴로지 인지 분산 시스템
+* 파티션 가시성 제공(어떤 인스턴스가 어느 파티션인지 확인 가능)
+
+---
+
+## EC2 스팟 인스턴스(Spot) 상세
+
+* 온디맨드 대비 최대 90%까지 할인 가능
+
+* 최대 스팟 가격을 설정하고, 현재 가격이 조건을 만족하면 인스턴스 획득
+
+* 현재 가격이 최대 가격을 넘으면 2분 내 유예 후 중단/종료될 수 있음(시나리오에 따라 동작 상이)
+
+* 중단을 피하고 싶다면 **Spot Block**(1~6시간) 사용 가능
+
+  * 드물게 회수될 수 있음
+
+* 사용처: 배치/분산 처리 등 실패 내성이 있는 작업
+
+* 스팟 요청(Spot Request)에 포함되는 정보
+
+  * 최대 가격
+  * 목표 인스턴스 수
+  * 런치 스펙(AMI, 타입, 네트워크 등)
+  * 요청 타입(일회성/지속성)
+  * 유효 시작/종료 시간(valid from/until)
+
+* 요청 타입
+
+  * **일회성(One-time)**: 한 번 충족되면 요청이 종료
+  * **지속성(Persistent)**: 회수되면 다시 맞추려 시도하며, 최초 충족 후에도 요청이 유지
+
+* 스팟 요청 취소
+
+  * 요청이 **open / active / disabled** 상태일 때 취소 가능
+  * 스팟 요청을 취소해도 인스턴스가 자동 종료되지 않을 수 있음 → 종료가 필요하면 인스턴스도 별도 종료
+
+---
+
+## 스팟 플릿(Spot Fleets)
+
+* 스팟 인스턴스 집합 + (선택적으로) 온디맨드 인스턴스를 함께 목표 용량으로 운영
+* 가격 제약을 만족하며 목표 용량(target capacity)을 맞추려고 시도
+* 런치 풀(launch pool): 인스턴스 타입/OS/AZ 조합별 후보군
+* 여러 런치 풀을 두고 최적의 풀을 선택 가능
+* 목표 용량을 달성하면 추가 런칭 중지
+* 할당 전략
+
+  * **lowestPrice**: 가장 싼 풀부터 사용
+  * **diversified**: 모든 풀에 분산
+  * **capacityOptimized**: 용량 확보 가능성이 높은 풀 위주로 선택
+* 요약: 스팟을 자동으로, 가격/용량 조건에 맞춰 대량 조달하는 방식
