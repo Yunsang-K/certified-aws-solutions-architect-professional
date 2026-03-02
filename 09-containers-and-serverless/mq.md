@@ -1,17 +1,40 @@
 # Amazon MQ
 
-- SNS and SQS are AWS services using AWS APIs
-- SNS provides topics which are one to many communication channels, SQS provides queues which are one to one communication channels
-- Both SNS and SQS are public services, HA and AWS integrated
-- Larger organization might already use on-premise messaging systems, which are not entirely compatible with SNS and SQS
-- Amazon MQ is an open-source message broker, is a managed implementation of Apache ActiveMQ
-- It supports the JMS API and protocols such as AMQP, MQTT, OpenWire and STOMP
-- It provides both queues and topics
-- It uses message broker services which can be single instance (test, dev) and HA pair (Active/StandBy for production)
-- Unlike SQS and SNS, Amazon MQ is not a public service, it runs in a VPC
-- It does not have native integration with other AWS services in the same way as SNS/SQS
-- Amazon MQ considerations:
-    - By default we should chose SNS/SQS for newer implementation
-    - We should use Amazon MQ if we migrate from an existing system with little to no application change
-    - We should use Amazon MQ if we need APIs such as JMS or protocols such as AMQP, MQTT, OpenWire, STOMP
-    - Amazon MQ requires the appropriate private networking
+* **SNS / SQS는 AWS API 기반 메시징 서비스**
+
+  * **SNS**: 토픽 기반 *1:N* (발행자 1, 구독자 다수)
+  * **SQS**: 큐 기반 *1:1* (보통 소비자 단일 처리 모델)
+  * 둘 다 **퍼블릭 서비스**이며 **고가용성(HA)**, **AWS 서비스들과의 통합**이 강함
+
+* **대규모 조직은 온프레미스 메시징을 이미 쓰는 경우가 많음**
+
+  * 기존 온프레미스 브로커(예: ActiveMQ/RabbitMQ 계열)는 **SNS/SQS와 API·프로토콜이 완전히 호환되지 않는** 경우가 많아, 마이그레이션 시 코드 변경 비용이 커질 수 있음
+
+* **Amazon MQ란?**
+
+  * 오픈소스 메시지 브로커를 AWS가 관리형으로 제공하는 서비스
+  * 기본적으로 **Apache ActiveMQ의 관리형 구현(Managed Broker)** 로 이해하면 됨
+  * **JMS API** 지원
+  * 지원 프로토콜 예시: **AMQP, MQTT, OpenWire, STOMP**
+  * **Queue와 Topic 모두 제공**
+
+* **배포/가용성 모델**
+
+  * **Single-instance**: 개발/테스트 용도
+  * **HA Pair(Active/Standby)**: 운영(프로덕션) 용도에서 사용 (장애 시 스탠바이로 페일오버)
+
+* **네트워크/통합 관점의 차이**
+
+  * **SNS/SQS와 달리 Amazon MQ는 VPC 내부에서 동작**(퍼블릭 엔드포인트 기반 서비스가 아님)
+  * **SNS/SQS처럼 AWS 서비스들과 “네이티브 통합”이 강하지 않음**
+  * 따라서 클라이언트가 접근하려면 **프라이빗 네트워킹(서브넷/보안그룹/라우팅/VPN·DX 등)** 설계가 필요
+
+* **선택 기준(시험 포인트)**
+
+  * 신규 설계라면 기본값은 **SNS/SQS**
+  * 다음 상황이면 **Amazon MQ**가 유리
+
+    1. 기존 메시징 시스템에서 **애플리케이션 변경을 최소화**하며 마이그레이션해야 함
+    2. **JMS API**가 필요함
+    3. **AMQP/MQTT/OpenWire/STOMP** 같은 브로커 프로토콜이 필요함
+    4. 브로커가 **VPC 내부 프라이빗 접근**을 전제로 해야 함
