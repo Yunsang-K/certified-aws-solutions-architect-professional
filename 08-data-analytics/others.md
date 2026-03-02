@@ -2,23 +2,37 @@
 
 ## AWS Data Exchange
 
-- AWS Data Exchange is a service that helps AWS easily share and manage data entitlements from other organizations at scale
-- As a data receiver, we can track and manage all of our data grants and AWS Marketplace data subscriptions in one place
-- For data senders, AWS Data Exchange eliminates the need to build and maintain any data delivery and entitlement infrastructure
+* **AWS Data Exchange**는 다른 조직이 보유한 데이터를 **AWS에서 대규모로 공유**하고, **데이터 사용 권한(Entitlements)** 을 **관리**할 수 있게 해주는 서비스입니다.
+* **데이터 수신자(Receiver)** 관점에서는, 우리가 받은 **데이터 권한(Grants)** 과 **AWS Marketplace 데이터 구독(Subscriptions)** 을 **한 곳에서 추적·관리**할 수 있습니다.
+* **데이터 제공자(Sender)** 관점에서는, 데이터 전달과 권한 부여를 위해 별도의 **전송/권한 관리 인프라를 구축·운영할 필요가 없도록** 해줍니다.
+
+---
 
 ## AWS Data Pipeline
 
-- AWS Data Pipeline is a web service that we can use to automate the movement and transformation of data
-- We you can define data-driven workflows, so that tasks can be dependent on the successful completion of previous tasks
-- Components of a data pipeline:
-    - Pipeline definition:  specifies the business logic of our data management
-    - Pipeline: schedules and runs tasks by creating Amazon EC2 instances to perform the defined work activities
-    - Task Runners: polls for tasks and then performs those tasks. For example, Task Runner could copy log files to Amazon S3 and launch Amazon EMR clusters. Task Runner is installed and runs automatically on resources created by your pipeline definitions
-- Use case examples:
-    - We can use AWS Data Pipeline to archive your web server's logs to Amazon Simple Storage Service (Amazon S3) each day and then run a weekly Amazon EMR (Amazon EMR) cluster over those logs to generate traffic reports
+* **AWS Data Pipeline**은 데이터의 **이동(movement)** 과 **변환(transformation)** 을 **자동화**하는 웹 서비스입니다.
+* **데이터 기반 워크플로우**를 정의할 수 있어, 이전 작업이 성공적으로 끝나야 다음 작업이 실행되는 등 **작업 간 의존성**을 구성할 수 있습니다.
+* 데이터 파이프라인 구성 요소:
+
+  * **Pipeline definition**: 데이터 관리의 **비즈니스 로직**(무엇을/언제/어떻게)을 정의
+  * **Pipeline**: 정의된 작업을 실행하기 위해(필요 시) **EC2 인스턴스를 생성**하는 등 작업을 **스케줄링·실행**
+  * **Task Runners**: 작업을 **폴링(polling)** 하여 가져온 뒤 실행
+
+    * 예: 로그 파일을 S3로 복사, EMR 클러스터 실행 등
+    * Task Runner는 파이프라인이 생성한 리소스에 **자동 설치/실행**될 수 있음
+* 사용 사례 예:
+
+  * 웹 서버 로그를 **매일 S3에 아카이브**하고, **주 1회 EMR 클러스터**로 로그를 분석해 트래픽 리포트를 생성
+
+---
 
 ## AWS Lake Formation
 
-- AWS Lake Formation is a service that makes it easy to set up a secure data lake in days
-- Creating a data lake with Lake Formation is as simple as defining data sources and what data access and security policies we want to apply
-- Helps us collect and catalog data from databases and object storage, move the data into new Amazon S3 data lake, clean and classify data using machine learning algorithms, and secure access to sensitive data
+* **AWS Lake Formation**은 **며칠 내**에 **보안이 적용된 데이터 레이크**를 쉽게 구축하도록 돕는 서비스입니다.
+* 데이터 레이크 생성은, **데이터 소스**와 적용할 **접근 제어/보안 정책**을 정의하는 것에서 시작합니다.
+* 주요 기능:
+
+  * 데이터베이스/오브젝트 스토리지로부터 **수집 및 카탈로그화**
+  * 데이터를 **S3 기반 데이터 레이크로 이동**
+  * 머신러닝 알고리즘을 활용해 데이터 **정제·분류**
+  * 민감 데이터에 대한 **접근 제어 및 보안 적용**
