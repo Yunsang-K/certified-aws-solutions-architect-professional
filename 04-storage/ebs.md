@@ -1,93 +1,134 @@
-# EBS and Instance Store
+# EBS 및 Instance Store
 
-## EBS Volume Types
+## EBS 볼륨 타입
 
-- **General Purpose SSD (GP2/GP3)**:
-    - GP2 is the default storage type for EC2, GP3 is the newer version
-    - A GP2 volume can be as small as 1GB or as large as 16TB
-    - IO Credit:
-        - An IO is one input/output operations, one 16 KB chunk of data
-        - 1 IOPS is 1 IO in 1 second
-        - 1 IO credit = 1 IOPS
-    - If we have no credits for the volume, we can not perform any IO
-    - The IO bucket has 5.4 million of credits, it refills based at rate based on the baseline performance of the storage
-    - The baseline performance for GP2 is based on the volume size, we get 3 IO credits per second, per GB of volume size. Also, it fills with a min of 100 IO credit per second regardless of the volume size
-    - By default GP2 can burst up to 3000 IOPS
-    - If we consume more credits than the bucket is refilling, than we are depleting the bucket
-    - We have to ensure the buckets are replenishing and not depleting down to 0, otherwise the storage will be unusable
-    - Volume larger than 1TB will exceed the burst rate of 3000 IOPS, they will always achieve the baseline performance as standard, they wont use the credit system
-    - Max IO 16000 IO credits per second, any volume larger than 5.33 TB will achieve this maximum rate constantly
-    - GP2 can be used for boot volumes
-    - GP3 is similar to GP2, but it removes the credit system for a simpler way of working:
-        - Every GP3 volume starts at a standard 3000 IOPS and 125 MiB/s regardless of volume size
-    - Base price for GP3 is 20% cheaper than GP2
-    - For more performance we can pay extra cost for up to 16000 IOPS or 1000 MiB/s throughput
-- **Provisioned IOPS SSD (IO1/2)**:
-    - There are 3 types of provisioned IOPS storage options: IO1 and its successor IO2 and IO2 BlockExpress (currently in preview)
-    - For this storage category the IOPS value can be configured independently of the storage size
-    - Provisioned IOPS storages are recommended for usage where consistent low latency and high throughput is required
-    - Max IOPS per volume is 64_000 IOPS per volume and 1000 MB/s throughput, while with BlockExpress we can achieve 256_000 IOPS per volume and 4000 MB/s throughput
-    - Volume size ranges from 4 GB up to 16 TB for IO2/IO3 and up to 64 TB for BlockExpress
-    - We can allocate IOPS performance values independently of the size of the volume, there is a maximum IOPS value per size:
-        - IO1 50 IOPS / GB MAX
-        - IO2 500 IOPS / GB MAX
-        - BlockExpress 1000 IOPS / GB MAX
-    - Per instance performance: maximum performance between EBS service and EC2. Usually this implies more than one volume in order to be saturated. Max values:
-        - IO1 260_000 IOPS and 7500 MB/s (4 volumes to saturate)
-        - IO2 160_000 IOPS and 4750 MB/s (less than IO1)
-        - BlockExpress 260_000 IOPS and 7500 MB/s
-    - Use cases: smaller volumes and super high performance
-- HDD based volume types:
-    - There are 2 types of HDD based storages: ST1 Throughput Optimized, SC1 Cold HDD
-    - **ST1**:
-        - Cheaper than SSD based volumes, ideal for larger volumes of data
-        - Recommended for sequential data, applications when throughput is more important than IOPS
-        - Volume size can be between 125 GB and 16 TB
-        - Offers maximum 500 IOPS, data IO is measured in blocks of 1 MB => max throughput of 500 MB/s
-        - Works similar as GP2 with a credit system
-        - Offer a base performance of 40 MB/s per TB of volume size with bursting to 250 MB/s per TB
-        - Designed for frequently accessed sequential data at lower cost
-    - **SC1**:
-        - SC1 is cheaper than ST1, has significant trade-offs
-        - Geared towards maximum economy when we want to share a lot of data without caring about performance
-        - Offers a maximum of 250 IOPS, 250 MB/S throughput
-        - Offer a base performance of 12 MB/s per TB of volume size with bursting to 80 MB/s per TB
-        - Volume size can be between 125 GB and 16 TB
-        - It is the lower cost EBS storage available
+* **범용 SSD (GP2/GP3)**
 
-## Instance Store Volumes
+  * GP2는 EC2의 기본 스토리지 타입(기본값)이고, GP3는 더 최신 버전
+  * GP2 볼륨 크기: 최소 1GB ~ 최대 16TB
+  * IO 크레딧(IO Credit) 개념:
 
-- Provides block storage devices, raw volumes which can be mounted to a system
-- They are similar to EBS, but they are local drives instead of being presented over the network
-- These volumes are physically connected to the EC2 host, instances on the host can access these volumes
-- Provides the highest storage performance in AWS
-- Instance stores are included in the price of EC2 instances with which they come with
-- **Instance stores have to be attached at launch time, they can not be added afterwards!**
-- If an EC2 instance moves between hosts the instance store volume loses all its data
-- Instances can move between hosts for many reasons: instance are stopped and restarted, maintenance reasons, hardware failure, etc.
-- **Instance store volumes are ephemeral volumes!**
-- One of the primary benefit of instance stores is performance, ex: D3 instance provides 4.6 GB/s throughput, I3 volumes provide 16 GB/s of sequential throughput with NVMe SSD
-- Instance store considerations:
-    - Instance store volumes are local to EC2 hosts
-    - Instance store can be added only at launch
-    - Data is lost on an instance stores in case the instance is moved, resized or there is a hardware failure
-    - Instance stores provide high performance
-    - For instance store volumes we pay for it with the EC2 instance
-    - Instance store volumes are temporary!
+    * IO = 1회 입력/출력 작업(데이터 16KB 단위 1청크)
+    * 1 IOPS = 1초에 1 IO
+    * 1 IO credit = 1 IOPS (동일 개념으로 이해)
+  * 볼륨에 크레딧이 없으면 IO를 수행할 수 없음
+  * IO 버킷(bucket) 최대치: 540만 크레딧
+  * 버킷은 스토리지 “기본 성능(baseline)”에 따라 채워짐
+  * GP2 기본 성능(baseline):
 
-## Choosing between Instance Store and EBS
+    * 볼륨 크기에 비례: **GB당 초당 3 IO credit(=3 IOPS)**
+    * 단, 볼륨이 작아도 **최소 초당 100 IO credit**은 채워짐
+  * GP2는 기본적으로 최대 **3000 IOPS까지 버스트(burst)** 가능
+  * 버킷 충전량보다 소비량이 많으면 크레딧이 고갈(deplete)됨
+  * 크레딧이 0에 가까워지면 성능이 급락하여 사실상 스토리지가 “사용 불가 수준”이 될 수 있으므로, **크레딧이 보충되는 패턴인지 모니터링**이 중요
+  * **1TB 초과 볼륨**은 3000 IOPS 버스트 한계를 넘는 baseline을 가지게 되어, 크레딧 시스템에 의존하지 않고 **항상 baseline 성능을 안정적으로 달성**
+  * 최대 IO 성능: 초당 **16000 IO credit(=16000 IOPS)**
 
-- Fer persistence storage we should default to EBS
-- For resilience storage we should avoid instance store an default to EBS
-- If the storage should be isolated from EC2 instance lifecycle we should use EBS
-- Resilience with in-built replication - we can use both, it depends on the situation
-- For high performance needs -  we can also use both, it depends on the situation
-- Fos super high performance we should use instance store
-- If cost is a primary concern we can use instance store if it comes with the EC2 instance
-- Cost consideration: cheaper volumes: ST1 or SC1
-- Throughput or streaming: ST1
-- Boot volumes: HDD based volumes are not supported (no ST1 or SC1)
-- GP2/3 - max performance up to 16000 IOPS
-- IO1/2 - up to 64000 IOPS (BlockExpress: 256000)
-- RAID0 + EBS: up to 260000 IOPS (maximum possible IOPS per EC2 instance)
-- For more than 260000 IOPS - use instance store
+    * **5.33TB 초과 볼륨**은 이 최대치를 상시 달성
+  * GP2는 부트(boot) 볼륨으로 사용 가능
+  * GP3는 GP2와 유사하지만 **크레딧 시스템을 제거**해 운영이 단순:
+
+    * 모든 GP3 볼륨은 크기와 무관하게 기본 **3000 IOPS + 125 MiB/s**에서 시작
+  * GP3 기본 가격은 GP2 대비 **약 20% 저렴**
+  * 추가 비용을 내면 성능을 더 올릴 수 있음:
+
+    * 최대 **16000 IOPS**, 최대 **1000 MiB/s throughput**
+
+* **프로비저닝 IOPS SSD (IO1/IO2)**
+
+  * Provisioned IOPS 계열: IO1, 후속인 IO2, 그리고 IO2 Block Express(현재 프리뷰)
+  * 이 계열은 **볼륨 크기와 무관하게 IOPS를 독립적으로 설정 가능**
+  * **일관된 저지연 + 고처리량**이 필요한 워크로드에 권장
+  * 볼륨당 최대 성능:
+
+    * IO1/IO2: **64,000 IOPS**, **1000 MB/s throughput**
+    * Block Express: **256,000 IOPS**, **4000 MB/s throughput**
+  * 볼륨 크기:
+
+    * IO2(및 문서 내 IO3로 표기된 항목): **4GB ~ 16TB**
+    * Block Express: **최대 64TB**
+  * 크기 대비 최대 IOPS 제한(GB당):
+
+    * IO1: **50 IOPS/GB**
+    * IO2: **500 IOPS/GB**
+    * Block Express: **1000 IOPS/GB**
+  * 인스턴스 단(EC2+EBS)에서의 최대치는 “EBS 서비스 한도”와 “EC2 인스턴스 EBS 대역폭/IO 한도” 중 더 낮은 값에 의해 결정됨
+
+    * 보통 최대치를 쓰려면 **볼륨 여러 개를 붙여** 포화(saturate)시키는 구성이 필요
+    * 최대치 예:
+
+      * IO1: **260,000 IOPS**, **7500 MB/s** (대략 4볼륨으로 포화)
+      * IO2: **160,000 IOPS**, **4750 MB/s** (IO1보다 낮음)
+      * Block Express: **260,000 IOPS**, **7500 MB/s**
+  * 사용 사례: **작은 용량이더라도 매우 높은 성능이 필요한 경우**
+
+* **HDD 기반 볼륨 타입**
+
+  * HDD 계열: ST1(Throughput Optimized), SC1(Cold HDD)
+
+  * **ST1**:
+
+    * SSD 대비 저렴, **대용량 데이터**에 적합
+    * IOPS보다 **Throughput(순차 처리량)**이 중요한 워크로드(스트리밍/배치 등)에 권장
+    * 볼륨 크기: **125GB ~ 16TB**
+    * 최대 **500 IOPS**, IO 단위는 **1MB 블록**으로 측정 → 최대 처리량 **500 MB/s**
+    * GP2처럼 **크레딧 시스템** 기반
+    * 기본 성능: **TB당 40 MB/s**, 버스트 시 **TB당 250 MB/s**
+    * 자주 접근하는 순차 데이터에 비용 효율적
+
+  * **SC1**:
+
+    * ST1보다 더 저렴하지만 성능 트레이드오프 큼
+    * 성능을 크게 신경 쓰지 않고 **아주 저렴하게 대량 보관**할 때
+    * 최대 **250 IOPS**, **250 MB/s throughput**
+    * 기본 성능: **TB당 12 MB/s**, 버스트 시 **TB당 80 MB/s**
+    * 볼륨 크기: **125GB ~ 16TB**
+    * EBS 중 최저 비용 스토리지
+
+---
+
+## Instance Store 볼륨
+
+* 블록 스토리지 장치(로컬 디스크)를 제공하며, OS에 마운트해 사용
+* EBS와 비슷하지만 **네트워크로 제공되는 스토리지가 아니라 EC2 호스트에 물리적으로 붙은 로컬 드라이브**
+* AWS에서 **가장 높은 스토리지 성능**을 제공하는 선택지 중 하나
+* 인스턴스 스토어는 해당 EC2 인스턴스 가격에 **포함**(별도 볼륨 과금 개념이 아님)
+* **반드시 인스턴스 “런치 시점”에만 연결 가능**하며, 이후 추가 불가
+* EC2가 호스트를 옮기면(instance migration) 인스턴스 스토어 데이터는 소실
+
+  * 호스트 이동 원인: stop/start, 유지보수, 하드웨어 장애 등
+* **Instance Store는 Ephemeral(휘발성) 스토리지**
+* 성능 예시:
+
+  * D3 인스턴스: 약 **4.6 GB/s** 처리량
+  * I3 (NVMe SSD): 순차 처리량 **16 GB/s** 수준
+* 핵심 정리:
+
+  * 로컬 디스크(호스트 종속)
+  * 런치 시에만 추가 가능
+  * 이동/리사이즈/하드웨어 실패 시 데이터 유실
+  * 고성능
+  * 비용은 EC2 인스턴스 가격에 포함
+  * 임시/휘발성 용도
+
+---
+
+## Instance Store vs EBS 선택 기준
+
+* **영속성(persistence)**이 필요하면 기본은 **EBS**
+* **내구성/복원력(resilience)**이 필요하면 Instance Store는 피하고 **EBS 우선**
+* 스토리지가 **EC2 라이프사이클과 분리**되어야 하면 **EBS**
+* 내장 복제 기반 복원력 또는 고성능 요구는 **상황에 따라 EBS/Instance Store 혼용 가능**
+* **초고성능(super high performance)**이 필요하면 **Instance Store 고려**
+* 비용이 최우선이면, 해당 인스턴스에 포함된 Instance Store를 활용하는 것도 가능
+* 비용 최저 EBS 볼륨: **SC1**, 그 다음 **ST1**
+* 처리량/스트리밍 중심: **ST1**
+* 부트 볼륨:
+
+  * HDD 기반(ST1/SC1)은 **부트 볼륨 불가**
+* 성능 상한(요약):
+
+  * GP2/GP3: 최대 **16,000 IOPS**
+  * IO1/IO2: 최대 **64,000 IOPS** (Block Express: **256,000 IOPS**)
+  * RAID0 + EBS: EC2 인스턴스 기준 최대 **260,000 IOPS** 수준까지 가능
+  * **260,000 IOPS를 초과**해야 하면: **Instance Store 고려**
