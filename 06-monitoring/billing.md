@@ -1,37 +1,33 @@
-# AWS Billing and Cost Management
+# Cost Allocation Tags (비용 할당 태그)
+* **정의**: AWS 청구/비용 보고서에 **추가적인 분류 정보(메타데이터)** 를 붙여서, 비용을 **팀/프로젝트/환경/애플리케이션 단위로 집계·필터링** 할 수 있게 해주는 태그 기능입니다.
 
-## Cost Explorer
+## 1) 활성화(Enable) 특징
 
-- Tracks and analyzes your AWS usage. It is free for all accounts
-- Includes a default report that helps visualize the costs and usage associated with our TOP FIVE cost-accruing AWS services, and gives you a detailed breakdown on all services in the table view
-- We can view data for up to last 12 months, forecast how much we are likely to spend for the next tree months and get recommendations on what Reserved Instances to purchase
-- Cost Explorer must be enabled before it can be used. The owner of the account can enable it
+* Cost Allocation Tags는 **기본적으로 “태그를 달아도” 곧바로 비용 보고서에 반영되지 않으며**, **Billing 콘솔에서 ‘비용 할당 태그 활성화’ 작업을 해야** 보고서에서 사용할 수 있습니다.
+* 활성화는 **계정 단위** 또는 **Organizations의 관리 계정(Management account)에서 조직 단위**로 수행할 수 있습니다.
+* 활성화 후 **최대 24시간 정도** 지나야 보고서에서 **보이고/필터로 사용 가능**해질 수 있습니다.
+* **과거(활성화 이전) 데이터에 소급 반영되지 않습니다**(retroactive 아님).
 
-## AWS Cost and Usage Reports
+## 2) 유형(2가지)
 
--  AWS Cost and Usage report provides information about our usage of AWS resources and estimated costs for that usage
-- The AWS Cost and Usage report is a `.csv` file or a collection of `.csv` files that is stored in an S3 bucket. Anyone who has permissions to access the specified S3 bucket can see the billing report files
-- We can use the Cost and Usage report to track your Reserved Instance Utilization, charges, and allocations
-- For time granularity, we can choose one of the following:
-    - Hourly: if we want our items in the report to be aggregated by the hour
-    - Daily: if we want our items in the report to be aggregated by the day
-    - Monthly: if we want our items in the report to be aggregated by month
-- Report can be automatically uploaded into AWS Redshift and/or AWS QuickSight for analysis
+### A. AWS 생성 태그 (AWS-generated)
 
-## AWS Budgets
+* 예: `aws:createdBy`, `aws:cloudformation:stack-name`
+* 특징: AWS가 자동으로 붙이거나 관리하는 메타데이터 성격의 태그
+* 단, **Cost Allocation Tags로 활성화**되어야 비용 보고서에서 활용 가능
 
-- Allows us to set custom budgets that will alert us when our costs or usage exceed or are forecasted to exceed your budgeted amount
-- With Budgets, we can view the following information:
-    - How close our plan is to our budgeted amount or to the free tier limits
-    - Our usage to date, including how much you have used of your Reserved Instances and purchased Savings Plans
-    - Our current estimated charges from AWS and how much your predicted usage will incur in charges by the end of the month
-    - How much of our budget has been used
-- Budget information is updated up to three times a day
-- Types of Budgets:
-    - **Cost budgets**: plan how much we want to spend on a service
-    - **Usage budgets**: plan how much we want to use one or more services
-    - **RI utilization budgets**: define a utilization threshold and receive alerts when your RI usage falls below that threshold
-    - **RI coverage budgets**: define a coverage threshold and receive alerts when the number of your instance hours that are covered by RIs fall below that threshold
-- Budgets can be tracked at the daily, monthly, quarterly, or yearly level, and we can customize the start and end dates
-- Budget alerts can be sent via email and/or Amazon SNS topic
-- First two budgets created are free of charge
+### B. 사용자 정의 태그 (User-defined)
+
+* 예: `user:something` (환경에 따라 `Project=foo`, `Env=prod` 같은 일반 키도 많이 사용)
+* 특징: 사용자가 리소스에 직접 부여해 비용을 원하는 기준으로 분류
+
+## 3) 어디에 보이나?
+
+* Cost Allocation Tags는 **Billing Console에서 관리/표시**되고,
+* 활성화된 태그는 **비용/사용량 보고서(Cost reports)** 에서 **컬럼/필터**로 사용할 수 있습니다.
+
+## 4) 실무 포인트 (SAP-Pro 관점)
+
+* 비용 분석 목적이면 “태그를 다는 것”보다 **Billing에서 ‘활성화’가 진짜 시작점**입니다.
+* 조직(Organizations) 환경에서는 **태그 표준(키/값 규칙) + 태깅 강제 정책(SCP, Tag Policies 등)** 과 함께 가야 보고서가 깨끗하게 나옵니다.
+* “언제부터 집계되나?” 질문에는 항상 **활성화 시점 이후 + 최대 24시간 지연 + 소급 없음**을 같이 답하면 안전합니다.
