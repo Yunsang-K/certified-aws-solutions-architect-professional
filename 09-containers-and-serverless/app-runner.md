@@ -1,11 +1,25 @@
 ## AWS App Runner
 
-- Fully managed service for deploying a containerized apps and APIs
-- It is a PaaS solution with all components managed by AWS - we just bring our code and container image
-- Integrates with GitHub and ECR for getting code or already built containers
-- Provides the following features:
-    - Auto scaling
-    - Load balancing
-    - Health checks
-    - Observability
-- App Runner applications can run inside in a VPC
+* **완전관리형(fully managed) PaaS**로, **컨테이너 기반 웹앱/HTTP API**를 손쉽게 배포·운영하는 서비스
+* 사용자는 보통 **소스 코드 또는 컨테이너 이미지(ECR)**만 제공하면 되고, 나머지(프로비저닝/배포/스케일/로드밸런싱 등)는 AWS가 관리
+
+### 소스/이미지 연동
+
+* **GitHub 연동(소스 기반 배포)**: App Runner가 빌드/배포 파이프라인을 관리하며 자동 배포 설정 가능
+* **ECR 연동(이미지 기반 배포)**: 이미 빌드된 컨테이너 이미지를 가져와 배포
+
+### 기본 제공 기능(핵심)
+
+* **오토스케일링**(요청 트래픽 기반)
+* **로드 밸런싱**
+* **헬스 체크**
+* **관측성(Observability)**: CloudWatch 등과 연동해 로그/메트릭 확인
+
+### 네트워크/VPC 관련 (중요 포인트)
+
+* “App Runner 애플리케이션이 **VPC 안에서 실행된다**”라고 단정하면 오해가 생길 수 있습니다.
+  App Runner 서비스 자체는 **관리형 환경에서 동작**하고, 대신 **VPC 커넥터(VPC Connector)**를 통해 **VPC 내부 리소스(RDS, ElastiCache 등)로 ‘나가는’ 사설 연결**을 붙일 수 있습니다.
+* 즉, 흔히 시험/설계 관점에서는:
+
+  * **퍼블릭 엔드포인트로 서비스(인바운드)**를 제공하고
+  * **아웃바운드만 VPC로 붙여서** DB 같은 사설 리소스 접근을 허용하는 형태로 이해하는 게 안전합니다.
