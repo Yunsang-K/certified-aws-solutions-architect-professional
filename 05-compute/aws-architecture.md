@@ -1,24 +1,109 @@
-# Regional and Global AWS Architecture
+## Regional and Global AWS Architecture (SAP-C02 관점 한국어 정리)
 
-- There are 3 main type of architectures:
-    - Small scale architectures: one region/one country
-    - Small architecture with DR: one region + backup region for disaster recovery
-    - Multiple region based systems
-- Architectural components at global level:
-    - Global Service Location and Discovery
-    - Content Delivery (CDN) and optimization
-    - Global health checks and Failover
-- Regional components:
-    - Regional entry point
-    - Scaling and resilience
-    - Application services and components
-![Regional and Global Architecture](images/RegionalandGlobalInfrastructure2.png)
+### 1) 아키텍처 유형 3가지
 
+1. **소규모(단일 리전/단일 국가)**
 
-Web Tier : Customer facing layer. There would be regional based services like ALB or API gateway dependig on application architecture. Abstracts customers from underlying architecture.
-Compute Tier: The infra to web tier is provided by compute tier using EC2, lambda or containers.
-Storage Services: Service like EBS, EFS or S3.
-Data Storage: Products like RDS, Aurora, DynamoDB, and RedShift.
-Caching: Elastic cache for general caching, DynamoDB acclerator(DAX)
-App Services: Kinesis, Step Functions, SQS, SNS
+   * 한 리전에만 배포. 지연시간·비용·운영이 단순함.
+2. **소규모 + DR(재해복구)**
 
+   * **기본 리전 + 백업 리전**을 두고 장애 시 전환.
+   * RTO/RPO 목표에 따라 Warm/Hot/Cold Standby를 선택.
+3. **멀티 리전(다중 리전 기반 시스템)**
+
+   * 전 세계 사용자 대상으로 성능·가용성을 높임.
+   * Active-Active, Active-Passive 등 패턴이 있음.
+
+---
+
+### 2) “글로벌 레벨” 구성요소 (전 세계 공통 레이어)
+
+* **글로벌 서비스 위치/디스커버리**
+
+  * 사용자가 “어디로” 들어올지 결정하는 레이어. (예: DNS 기반 라우팅)
+* **콘텐츠 전송(CDN) 및 최적화**
+
+  * 정적/동적 콘텐츠 가속, 엣지 캐시, 압축/최적화.
+* **글로벌 헬스체크 및 페일오버**
+
+  * 리전 단위 상태를 감시하고 장애 시 다른 리전으로 트래픽 전환.
+
+> 시험 포인트: “글로벌 계층은 ‘진입 경로 + 최적화 + 리전 전환’”로 기억하면 빠릅니다.
+
+---
+
+### 3) “리전 레벨” 구성요소 (각 리전 내부 구조)
+
+* **리전 엔트리 포인트**
+
+  * 해당 리전에 들어오는 관문. (예: ALB, API Gateway 등)
+* **스케일링/복원력(Resilience)**
+
+  * 오토스케일, 멀티 AZ, 셀프힐링, 서킷브레이커 등.
+* **애플리케이션 서비스/컴포넌트**
+
+  * 비동기 처리, 이벤트 기반, 워크플로우, 스트리밍 등.
+
+---
+
+## 4) 티어(계층)별 역할 정리
+
+### Web Tier (고객 접점 계층)
+
+* **고객 요청을 받는 “앞단”**
+* 리전별로 보통 **ALB** 또는 **API Gateway**를 둠
+* 목적: 사용자 트래픽을 **내부 구조로부터 추상화**(뒤가 바뀌어도 앞은 안정)
+
+### Compute Tier (실행 계층)
+
+* Web Tier 뒤에서 실제 로직 수행
+* 선택지:
+
+  * **EC2**(OS/런타임까지 직접 운영)
+  * **Lambda**(서버리스 이벤트 기반)
+  * **Containers**(ECS/EKS 등)
+
+### Storage Services (스토리지 계층)
+
+* 애플리케이션이 쓰는 파일/블록/오브젝트 저장
+* 예:
+
+  * **EBS**: 블록 스토리지(EC2에 붙는 디스크)
+  * **EFS**: 공유 파일 스토리지(NFS)
+  * **S3**: 오브젝트 스토리지(정적 자산/백업/데이터 레이크)
+
+### Data Storage (데이터베이스 계층)
+
+* 업무 데이터 저장(관계형/NoSQL/분석)
+* 예:
+
+  * **RDS / Aurora**: 관계형 OLTP
+  * **DynamoDB**: 키-밸류/NoSQL
+  * **Redshift**: 데이터 웨어하우스/분석
+
+### Caching (캐시 계층)
+
+* 지연시간·DB부하 감소
+* 예:
+
+  * **ElastiCache**: Redis/Memcached 기반 범용 캐시
+  * **DAX**: DynamoDB 전용 인메모리 캐시(읽기 가속)
+
+### App Services (애플리케이션 서비스 계층)
+
+* “연결·비동기·워크플로우” 구성 요소
+* 예:
+
+  * **Kinesis**: 스트리밍 수집/처리
+  * **Step Functions**: 워크플로우 오케스트레이션
+  * **SQS**: 큐(비동기, 버퍼링)
+  * **SNS**: Pub/Sub 알림, 팬아웃
+
+---
+
+## 5) 시험(프로) 레벨에서 자주 나오는 조합 패턴
+
+* **글로벌 진입(DNS/엣지) → 리전 엔트리(ALB/API GW) → 컴퓨트(EC2/Lambda/컨테이너) → 데이터/캐시/메시징**
+* **멀티 AZ는 리전 내 복원력**, **멀티 리전은 지역 단위 DR/글로벌 확장**로 구분해서 설명할 수 있어야 합니다.
+
+원하면, 위 내용을 **“단일 리전 / DR / 멀티 리전” 각각에 대해 대표 레퍼런스 아키텍처 한 장 요약(구성요소 + 트레이드오프 + 언제 쓰는지)** 형태로도 정리해줄게요.
