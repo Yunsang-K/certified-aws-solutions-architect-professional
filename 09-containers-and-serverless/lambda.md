@@ -1,178 +1,234 @@
 # AWS Lambda
 
-- Lambda is a Function-as-a-Service (FaaS) product. We provide specialized short running focused code for Lambda and it will take care running it and billing us for only what we consume
-- Every Lambda function uses a supported runtime, example: Python 3.8, Java 8, NodeJS
-- Every Lambda function is loaded into an executed in a runtime environment
-- When we create a function we define the resources the function will use. We define the memory directly and CPU usage allocation indirectly (based on the amount of memory)
-- We are only billed for the duration the function is running based on the number of invocations and the resources specified
-- Lambda is a key part of serverless architectures in AWS
-- Lambda has support for the following runtimes:
-    - Python
-    - Ruby
-    - Go
-    - Java
-    - C#
-    - Custom using Lambda layers (such as Rust)
-- Lambda deployment package size:
-    - 50 MB zipped
-    - 250 MB unzipped
-    - Up to 10 GB as a Docker image
-- Lambda functions are stateless, meaning there is no data left over after an invocation
-- When creating a Lambda function we define the memory. The memory can be between 128 MB and 10240 MB in 1 MB steps
-- We do not directly define the vCPU allocated to each function, it will automatically scale with the memory: 1769 MB of memory gives 1 vCPU
-- The runtime env. has a 512 MB (by default) storage available as `/tmp`. We can scale this storage up to 10240 MB. We can use this storage for whatever we need as long as we assume that it is blank at each execution of the function
-- Lambda function can run up to 15 minutes, after this a timeout will occur
-- The security for a Lambda function is controlled by the execution role. This is an IAM role attached to the function. This can have permissions for integration with other AWS services
+* Lambda는 FaaS(Function-as-a-Service) 서비스입니다. 짧게 실행되는 단일 목적(집중형) 코드를 함수로 제공하면, AWS가 실행/확장/운영을 처리하고 **사용한 만큼만 과금**합니다.
+* 모든 Lambda 함수는 지원되는 런타임(예: Python 3.8, Java 8, Node.js 등)에서 실행됩니다.
+* 각 Lambda 함수는 **런타임 환경(실행 환경, execution environment)** 에 로드되어 실행됩니다.
+* 함수를 만들 때 함수가 사용할 **리소스**를 정의합니다. **메모리**를 직접 지정하고, **CPU(vCPU)** 는 메모리 값에 따라 간접적으로 할당됩니다.
+* 과금은 기본적으로 **호출 횟수**와 **실행 시간(duration)**, 그리고 지정한 리소스(메모리 등)에 기반합니다.
+* Lambda는 AWS **서버리스 아키텍처**의 핵심 구성 요소입니다.
+* Lambda가 지원하는 런타임 예:
 
-## Lambda Networking
+  * Python
+  * Ruby
+  * Go
+  * Java
+  * C#
+  * (Lambda Layer 등을 이용한 Custom 런타임: 예 Rust)
+* 배포 패키지 크기 제한:
 
-- Lambda functions can have 2 types of networking modes:
-    - Public (default):
-        - Lambda can access public AWS services such as SQS, DynamoDB, etc. and also internet based services
-        - Lambda has network connectivity to public services running on the internet
-        - Offers the best performance for Lambda, no customer specific networking is required
-        - With public networking mode Lambda function wont be able to access resources in a VPC unless the resources do have public IPs and security controls allow external access
-    - VPC Networking:
-        - Lambda functions will run inside a VPC, so they will access everything in a VPC, assuming NACLs and SGs allow access
-        - They wont be able to access services outside of the VPC, unless networking configuration exists in the VPC to allow external access
-        - The Lambda needs `EC2Networking` permissions in order ot be able to create ENIs in the VPC
-        - VPC based Lambda functions do not directly in the VPC, they will use a shared ENI to access resources in the VPC as long as all the functions have the same Security Group. In case new Security Groups are attached to a certain Lambda, new ENIs are placed inside the VPC
-        - At the creation of the function, a certain ENI might be created for accessing the VPC. The initial setup would take up to 90 seconds. This setup will take place only once, not at every invocation
+  * ZIP 압축: 50 MB
+  * 압축 해제: 250 MB
+  * Docker 이미지: 최대 10 GB
+* Lambda 함수는 **상태 비저장(stateless)** 입니다. 즉, 한 번 실행이 끝나면 “남아 있는 데이터”를 전제로 하면 안 됩니다.
+* 메모리는 **128 MB ~ 10240 MB** 범위에서 **1 MB 단위**로 설정 가능합니다.
+* vCPU는 직접 지정하지 않고 메모리에 비례해 증가합니다. 예: **1769 MB 메모리 = 1 vCPU**
+* 런타임 환경에는 기본적으로 **512 MB**의 임시 스토리지가 `/tmp` 로 제공됩니다. 이를 **최대 10240 MB**까지 확장할 수 있습니다.
 
-## Lambda Security
+  * 이 영역은 필요에 따라 사용 가능하지만, 실행마다 “비어 있다”고 가정하는 것이 안전합니다(재사용될 수 있으나 보장되지 않음).
+* Lambda 함수의 최대 실행 시간은 **15분**이며, 초과 시 타임아웃이 발생합니다.
+* Lambda 함수의 보안은 **Execution Role(실행 역할)** 로 제어됩니다. 함수에 연결된 IAM Role이며, 다른 AWS 서비스에 접근하기 위한 권한을 포함합니다.
 
-- There are 2 key parts of the security model
-    - Lambda Functions will assume an execution role in order to access other AWS resources
-    - Resource policies: similar to resource policies for S3. Allows external accounts to invoke a Lambda functions, or certain services to use Lambda functions. Resources polices can be modified using the CLI/API (currently cannot be changed with the console)
+---
 
-## Lambda Logging
+## Lambda 네트워킹
 
-- Lambda uses CloudWatch Logs and X-Ray
-- Logs from Lambda executions are stored in CloudWatch Logs
-- Details about Lambda metrics are stored in CloudWatch Metrics
-- Lambda can be integrated with X-Ray for distributed tracing
-- For Lambda to be able to log we need to give permissions via the execution role
+* Lambda는 두 가지 네트워킹 모드를 가질 수 있습니다.
 
-## Lambda Invocations
+### 1) Public (기본)
 
-- There are 3 ways Lambda functions can be invoked:
-    - **Synchronous invocation**:
-        - Command line or API directly invoking the function
-        - The CLI or API will wait until the function returns
-        - API Gateway will also invoke Lambdas synchronously, use case for many serverless applications
-        - Any errors or retries have to be handled on the client side
-    - **Asynchronous invocation**:
-        - Used typically when AWS services invoke the function (example: S3 events)
-        - The service will not wait for the response (fire and forget)
-        - Lambda is responsible for any failure. Reprocessing will happen between 0 and 2 times
-        - The function should be idempotent in order to be rerun
-        - Lambda can be configured to send events to a DLQ in case of the processing did not succeed after the number of retries
-        - Destination: events processed by Lambdas can be delivered to destinations like SQS, SNS, other Lambda, EventBride. Success and failure events can be sent to different destinations
-    - **Event Source mapping**:
-        - Typically used on streams or queues which don't generate events (Kinesis, DynamoDB streams, SQS)
-        - Event Source mappers polls these streams and retrieves batches. These batches can be broken in pieces and sent to multiple Lambda invocations for processing
-        - We can not have a partially successful batch, either everything works or nothing works
-- In case of event processing in async invocation, in order to process the event we don't explicitly need rights to read from the sender
-- In case of event source mapping the event source mapper is reading from the source. The event source mapping uses permissions from the Lambda execution role to access the source service
-- Even if the function does not read data directly from the stream, the execution role needs read rights in order to handle the event batch
-- Any batch that consistently fails to be processed, it can be sent to an SQS queue or SNS topic for further processing
+* SQS, DynamoDB 같은 **퍼블릭 AWS 서비스** 및 **인터넷 상의 서비스**에 접근할 수 있습니다.
+* 고객 VPC 설정 없이 동작하므로 **성능/단순성 측면에서 유리**합니다.
+* 단, VPC 내부 리소스에는 기본적으로 직접 접근할 수 없습니다. (VPC 리소스가 퍼블릭 IP를 갖고, 보안 설정이 외부 접근을 허용하는 경우는 예외)
 
-## Lambda Versions
+### 2) VPC Networking
 
-- We can define different versions for given functions
-- A version of a function is the code + configuration of the function
-- When we publish a version, it becomes immutable, it no longer can be changed. It event gets its own ARN (Amazon Resource Name)
-- `$Latest` points to the latest version of Lambda version (it is not immutable)
-- We can also define aliases (DEV, STAGE, PROD) which point to a version of the function. Aliases can be changed to point to other versions
+* Lambda가 **VPC 내부에서 동작**하여, SG/NACL이 허용하는 범위 내에서 VPC 리소스에 접근할 수 있습니다.
+* VPC 밖(인터넷/퍼블릭 서비스)으로 나가려면 VPC에 **NAT Gateway/인터페이스 엔드포인트** 등 추가 네트워크 구성이 필요합니다.
+* VPC 연결을 위해 Lambda는 ENI를 생성해야 하므로 `EC2Networking` 권한이 필요합니다.
+* VPC 연결 Lambda는 “완전히 VPC에 상주”한다기보다, VPC 접근을 위해 **ENI를 사용**합니다.
 
-## Lambda Start-up Times
+  * 동일 SG를 사용하는 함수들은 **공유 ENI**를 통해 VPC에 접근할 수 있습니다.
+  * 다른 SG를 추가로 붙이면 **새 ENI**가 생성될 수 있습니다.
+* 함수 생성 시 VPC 접근을 위한 ENI 준비 과정이 발생할 수 있으며, 초기 설정은 **최대 90초**까지 걸릴 수 있습니다. 이 초기 설정은 **매 호출마다가 아니라(일반적으로) 최초/필요 시점에** 발생합니다.
 
-- Lambda code runs inside of a runtime environment (execution context)
-- At first invocation this execution context needs to be created and this will take time
-- This process is known as cold start and it can take 100ms or more
-- If the function is invoked again without too much of a gap, it might use the same execution context. This is called warm start
-- One function invocation runs in an execution environment at a time. If multiple parallel instances are needed, the contexts will require cold starts
-- **Provisioned concurrency**: we can provision one or more execution contexts in advance for Lambda invocations
-- The improve performance we can use the `/tmp` folder to pre-download data to it. If another invocations uses the same execution context, it will be able to access the previously downloaded data
-- We can create database connections outside of the Lambda handler. These will also be available for other invocations afterwards
+---
 
-## Lambda Function Handler
+## Lambda 보안
 
-- Lambda function executions have life cycles
-- The function code runs inside an execution environment
-- Lifecycle phases:
-    - `INIT`: creates or unfreezes the execution environment
-        - It has the following sub-components:
-            - `EXTENSION INIT`
-            - `RUNTIME INIT`
-            - `FUNCTION INIT`
-        - Init phase runs only at cold-starts
-    - `INVOKE`: runs the function handler (cold start)
-    - `NEXT INVOKE`(s): warm start using the same environment
-    - `SHUTDOWN`: execution environment is terminated after a period of inactivity
-        - It has the following sub-components:
-            - `RUNTIME SHUTDOWN`
-            - `EXTENSION SHUTDOWN`
-        - We can use Provisioned Concurrency to avoid having a cold-start in case the Lambda should be terminated
+* Lambda 보안 모델의 핵심은 2가지입니다.
 
-## Lambda Versions and Aliases
+  1. **Execution Role**: Lambda가 다른 AWS 리소스에 접근할 때 가정(assume)하는 IAM Role
+  2. **Resource Policy**: S3 버킷 정책과 유사하게, **외부 계정**이 Lambda를 호출하도록 허용하거나 특정 AWS 서비스가 Lambda를 호출하도록 허용하는 정책
 
-- Unpublished functions can be changed and deployed
-- `$LATEST` version of the Lambda code can be edited and deployed
-- We can take the current state of the function and publish it which will create an immutable version
-- If the function is published, the code, dependencies, runtime settings and env. variables in the version created can not be edited
-- Each version gets an uniq ARN (Qualified ARN)
-- Unqualified ARN points at the function without a specific version (`$LATEST`)
-- An alias is a pointer to a function version
-- Example: PROD => function:1, BETA => function:2
-- Each alias has an unique ARN
-- Aliases can be updated, changing which version they reference
-- Useful for PROD/DEV, BLUE/GREEN deployments, A/B testing
-- We can also use alias routing: sending a certain percentage of request to v1 and other percentage to v2. Both versions need the same role, same DLQ (or no DLQ) will be used and both versions need to be published
+     * Resource policy는 CLI/API로 수정 가능(콘솔에서 제한이 있을 수 있음)
 
-## Lambda Environment Variables
+---
 
-- Key and value pairs for associated with Lambda functions
-- By default they are associated with `$LATEST` - can be edited
-- If they are publishes, they can not be edited
-- They can be accessed within the execution environment
-- The environment variables can be encrypted with KMS
-- They allow code execution to be adjusted based on variables
+## Lambda 로깅
 
-## Lambda Layers
+* Lambda는 **CloudWatch Logs** 및 **X-Ray**와 통합됩니다.
+* 실행 로그는 CloudWatch Logs에 저장됩니다.
+* 메트릭은 CloudWatch Metrics에 저장됩니다.
+* X-Ray를 연동하면 분산 추적(distributed tracing)이 가능합니다.
+* 로깅을 위해서는 Execution Role에 관련 권한을 부여해야 합니다.
 
-- Used to split off libraries and dependencies from Lambda functions
-- Reduces the size of the deployment package
-- Layers can be reused by multiple Lambda functions
-- Libraries in layers are extracted in the `/opt` folder
-- Layers allow new runtimes which are not explicitly supported by AWS
+---
 
-## Lambda Container Images
+## Lambda 호출 방식(Invocations)
 
-- Until recently Lambda was considered to be a Function as a Service (FaaS) product, which means creation of a function, uploading code and executing it
-- Many organizations use containers and CI/CD processes built for containers
-- Lambda is now capable to use containers images
-- It is an alternative way of packaging the function code and using it with the Lambda product
-- Lambda Runtime API - has to be included with the container images, it is a package which allows interaction between a container and the Lambda
-- AWS Lambda Runtime Interface Emulator (RIE): used for local Lambda testing
+Lambda는 크게 3가지 방식으로 호출됩니다.
 
-## Lambda and ALB
+### 1) 동기(Synchronous) 호출
 
-- Lambda functions can be registered to ALB target groups
-- Communication between the user and the ALB is via HTTP/HTTPS, there is no difference than connecting to a classic server (EC2) from the user's perspective
-- When the ALB receives a request from the client it synchronously invokes the Lambda function
-- The LB passes in a JSON structure to the Lambda function, inside the `Event` structure. This has to be interpreted by the Lambda. What actually happens is that the LB translates the HTTP(S) request to a Lambda compatible event, to which the Lambda answers with a JSON object that gets translated back to HTTP/HTTPS response
-- Multi-Value headers:
-    - For an example lets us this URL for the Lambda: http://catagram.io?&search=roffle&search=winkie
-    - Without multi-value headers the Lambda receives the following:
-        ```
-        "queryStringParameters": {
-            "search": "winkie"
-        }
-        ```
-    - If the multi-value headers are enabled, we get this delivered to Lambda:
-        ```
-        "multiValueQueryStringParameters": {
-            "search": ["roffle", "winkie"]
-        }
-        ```
+* CLI나 API가 함수를 직접 호출하는 형태
+* 호출자가 함수의 응답을 **대기**
+* API Gateway도 일반적으로 Lambda를 동기 호출(서버리스 API의 대표 패턴)
+* 오류 처리/재시도는 기본적으로 **클라이언트 측**에서 처리(통합 구성에 따라 달라질 수 있음)
+
+### 2) 비동기(Asynchronous) 호출
+
+* AWS 서비스가 이벤트로 Lambda를 호출하는 경우에 흔함(예: S3 이벤트)
+* 호출 서비스는 응답을 기다리지 않음(“fire and forget”)
+* 실패 처리는 Lambda 측에서 수행하며, 기본적으로 **0~2회 재시도**가 발생할 수 있습니다.
+* 재시도에 대비해 함수는 **멱등성(idempotent)** 을 갖는 것이 중요합니다.
+* 실패가 반복되면 DLQ로 보낼 수 있습니다.
+* **Destination** 기능으로 성공/실패 이벤트를 SQS, SNS, 다른 Lambda, EventBridge 등으로 전달 가능하며, 성공/실패를 다른 대상으로 분기할 수 있습니다.
+
+### 3) Event Source Mapping
+
+* 이벤트를 “푸시”하지 않는 소스(예: Kinesis, DynamoDB Streams, SQS)에 주로 사용
+* Event Source Mapper가 소스를 **폴링**하여 배치를 가져오고, 배치를 여러 Lambda 실행으로 분할해 처리할 수 있습니다.
+* 배치 처리에서는 “부분 성공”이 어려운 케이스가 많아, **전부 성공 또는 전부 실패**로 다뤄지는 제약이 생길 수 있습니다(소스/기능 옵션에 따라 세부 동작은 달라질 수 있음).
+
+추가 포인트
+
+* 비동기 이벤트 처리에서는, 이벤트를 보내는 서비스에 대해 “명시적으로 읽기 권한”이 꼭 필요한 것은 아닙니다(호출 자체는 리소스 정책/서비스 연동으로 이뤄짐).
+* Event Source Mapping은 mapper가 소스에서 읽어야 하므로, **Lambda Execution Role**에 소스 읽기 권한이 필요합니다.
+* 함수 코드가 스트림/큐에서 직접 읽지 않더라도, 배치 수신/체크포인트 처리 등을 위해 실행 역할에 읽기 권한이 필요합니다.
+* 지속적으로 실패하는 배치는 SQS 큐나 SNS 토픽으로 보내 후속 처리할 수 있습니다.
+
+---
+
+## Lambda 버전(Versions)
+
+* 한 함수에 대해 여러 **버전**을 만들 수 있습니다.
+* 버전은 “코드 + 구성(configuration)”의 스냅샷입니다.
+* 버전을 Publish하면 **불변(immutable)** 이며, 고유 ARN을 가집니다.
+* `$LATEST` 는 최신 상태를 가리키며 **불변이 아닙니다**.
+* **Alias(DEV, STAGE, PROD 등)** 를 만들어 특정 버전을 가리키게 할 수 있으며, Alias는 다른 버전으로 변경 가능합니다.
+
+---
+
+## Lambda 시작 시간(Start-up Times)
+
+* Lambda 코드는 실행 컨텍스트(execution context)에서 동작합니다.
+* 최초 호출 시 실행 컨텍스트를 생성해야 하며 시간이 더 걸리는데 이를 **콜드 스타트(cold start)** 라고 합니다(100ms 이상일 수 있음).
+* 일정 시간 내 재호출되면 동일 컨텍스트를 재사용할 수 있으며 이를 **웜 스타트(warm start)** 라고 합니다.
+* 하나의 실행 환경은 한 시점에 보통 한 호출을 처리합니다. 병렬 호출이 늘어나면 실행 환경이 추가로 필요해 콜드 스타트가 발생할 수 있습니다.
+* **Provisioned Concurrency** 를 사용하면 실행 환경을 미리 준비해 콜드 스타트를 줄일 수 있습니다.
+* 성능 개선 팁:
+
+  * `/tmp`에 데이터를 미리 내려받아 두면 동일 환경 재사용 시 다음 호출에서 재활용 가능(단, 보장 아님)
+  * DB 커넥션 등을 핸들러 밖(전역)에서 생성하면 웜 스타트에서 재사용 가능
+
+---
+
+## Lambda 핸들러와 라이프사이클
+
+* Lambda 실행은 라이프사이클을 가집니다.
+* 주요 단계:
+
+  * `INIT`: 실행 환경 생성 또는 언프리즈
+
+    * 하위 구성:
+
+      * `EXTENSION INIT`
+      * `RUNTIME INIT`
+      * `FUNCTION INIT`
+    * INIT는 보통 **콜드 스타트에서만** 발생
+  * `INVOKE`: 함수 핸들러 실행(콜드 스타트 포함)
+  * `NEXT INVOKE`: 동일 환경 재사용 시의 후속 호출(웜 스타트)
+  * `SHUTDOWN`: 비활성 시간이 지나면 환경 종료
+
+    * 하위 구성:
+
+      * `RUNTIME SHUTDOWN`
+      * `EXTENSION SHUTDOWN`
+    * Provisioned Concurrency로 콜드 스타트 가능성을 줄일 수 있음
+
+---
+
+## Lambda 버전과 Alias(상세)
+
+* Publish 전(미게시) 함수는 변경/배포 가능
+* `$LATEST` 는 편집/배포 가능
+* 현재 상태를 Publish하면 불변 버전 생성
+* Publish된 버전의 코드/의존성/런타임 설정/환경 변수는 변경 불가
+* 각 버전은 고유 ARN(qualified ARN)을 가짐
+* 버전 지정 없는 ARN(unqualified ARN)은 기본적으로 함수 자체(`$LATEST`)를 가리킴
+* Alias는 특정 버전을 가리키는 포인터
+
+  * 예: `PROD -> function:1`, `BETA -> function:2`
+* Alias는 고유 ARN을 가짐
+* Alias는 업데이트 가능(가리키는 버전 변경)
+* 활용: PROD/DEV 분리, Blue/Green, A/B 테스트
+* **Alias routing**: 요청을 v1/v2로 퍼센트 분기 가능
+
+  * 두 버전은 동일 실행 역할과 동일 DLQ(또는 DLQ 없음)를 공유하며, 둘 다 Publish된 버전이어야 함
+
+---
+
+## Lambda 환경 변수(Environment Variables)
+
+* Lambda 함수에 연결되는 Key-Value 값
+* 기본적으로 `$LATEST` 에 연결되어 수정 가능
+* Publish된 버전에서는 수정 불가
+* 실행 환경에서 접근 가능
+* KMS로 암호화 가능
+* 코드 동작을 환경별로 조정하는 데 사용
+
+---
+
+## Lambda Layer
+
+* 라이브러리/의존성을 함수 본문에서 분리하기 위한 메커니즘
+* 배포 패키지 크기를 줄일 수 있음
+* 여러 Lambda 함수에서 재사용 가능
+* Layer의 라이브러리는 `/opt` 에 풀립니다.
+* 명시적으로 지원되지 않는 런타임을 Layer/커스텀 런타임으로 구성하는 데 활용 가능
+
+---
+
+## Lambda 컨테이너 이미지(Container Images)
+
+* 과거에는 “함수 생성 → 코드 업로드 → 실행” 중심의 FaaS 모델이 일반적이었음
+* 많은 조직이 컨테이너 기반 CI/CD를 사용
+* Lambda는 컨테이너 이미지로도 함수 패키징/배포 가능
+* Lambda Runtime API: 컨테이너와 Lambda 간 상호작용을 위해 이미지에 포함되어야 함
+* AWS Lambda Runtime Interface Emulator(RIE): 로컬에서 Lambda 테스트에 사용
+
+---
+
+## Lambda와 ALB
+
+* Lambda 함수를 ALB 타깃 그룹에 등록할 수 있습니다.
+* 사용자 ↔ ALB 통신은 HTTP/HTTPS이며, 사용자 관점에서는 EC2에 붙는 것과 유사합니다.
+* ALB는 요청을 받으면 Lambda를 **동기 호출**합니다.
+* ALB는 HTTP(S) 요청을 Lambda 이벤트(JSON)로 변환해 전달하고, Lambda의 JSON 응답을 다시 HTTP/HTTPS 응답으로 변환합니다.
+* Multi-Value 헤더/쿼리스트링 예:
+
+  * 예 URL: `http://catagram.io?&search=roffle&search=winkie`
+  * Multi-value 미사용 시:
+
+    ```json
+    "queryStringParameters": {
+      "search": "winkie"
+    }
+    ```
+  * Multi-value 사용 시:
+
+    ```json
+    "multiValueQueryStringParameters": {
+      "search": ["roffle", "winkie"]
+    }
+    ```
