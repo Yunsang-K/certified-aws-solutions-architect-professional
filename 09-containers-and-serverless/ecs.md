@@ -1,49 +1,77 @@
-# ECS - Elastic Container Service
+## ECS(Elastic Container Service)
 
-- It is a service that accepts containers and orchestrates where and how to run those containers
-- It is a managed container based compute service
-- It runs on two modes: EC2 and Fargate
-- Cluster: is the place where container run based on how we want them to run
-- Containers are located in container registries (ECR, DockerHub)
-- ECS uses **container definitions** to locate images in the container registries, which port should the image use, etc. providing information about the container we want to run
-- **Task definition**: represents a self-contained application, can have one or many containers defined in it. A task in ECS defines the application as a whole
-- Task definitions store the resources to be used (CPU, memory), networking configuration, compatibility (EC2 mode or Fargate) and also they store the task role (IAM role)
-- **Task role** is IAM role that the task can assume. It gives permission to ECS containers to access AWS services
-- **Task Execution Role**: to set up the container itself and maintain that, some tasks are performed. Container Agent performs those tasks for the container. So, the role required & assumed by Container Agent to set up the container is Task Execution Role
-- A task does not scale by its own and it is not HA
-- **ECS service**: it is configured by a **service definition**. In a service we define how we want a task to scale, how many copies we like to run
-- ECS services define scalability and HA for tasks
+### ECS 개요
 
-## ECS Cluster Modes
+* ECS는 **컨테이너를 받아서 어디서/어떻게 실행할지 오케스트레이션**해주는 서비스입니다.
+* **관리형(Managed) 컨테이너 기반 컴퓨트 서비스**입니다.
+* 실행 모드는 2가지입니다.
 
-- Cluster mode define how much of the admin overhead is required for running containers in ECS (what parts do we manage and what parts does AWS manage)
-- Cluster modes are:
-    - EC2 Mode
-    - Fargate Mode
+  * **EC2 모드**: EC2 인스턴스가 컨테이너 호스트
+  * **Fargate 모드**: 서버(EC2) 관리 없이 컨테이너 실행
 
-### EC2 Mode
+### 기본 구성 요소
 
-- Uses EC2 instances which are running inside of a VPC
-- Since we are inside of a VPC, we can benefit from using multiple AZs
-- When we create the cluster, we specify the initial size of containers
-- Horizontal scaling for EC2 instances and for ECS tasks is controlled by ASGs
-- With EC2 cluster mode we are paying for EC2 instances independently of what containers and how many of containers are running on them
+* **Cluster(클러스터)**: 컨테이너가 “어떤 방식으로” 실행될지 정의하는 실행 환경(논리적 묶음)입니다.
+* **Container Registry(이미지 저장소)**: 컨테이너 이미지는 보통 **ECR, Docker Hub** 등에 저장됩니다.
+* **Container Definition(컨테이너 정의)**: 어떤 이미지를 쓸지, 어떤 포트를 열지 등 **컨테이너 실행에 필요한 설정**을 담습니다.
+* **Task Definition(태스크 정의)**:
 
-### Fargate Mode
+  * ECS에서 **애플리케이션 단위**를 정의합니다.
+  * **1개 이상 컨테이너**를 포함할 수 있으며, “이 앱은 이렇게 구성된다”를 표현합니다.
+  * CPU/메모리, 네트워킹 설정, 호환성(EC2/Fargate), IAM Role 등을 포함합니다.
+* **Task Role(태스크 역할)**:
 
-- We don't have to manage EC2 instances for use as container host
-- With Fargate there are no servers to manage
-- AWS maintains a shared Fargate infrastructure platform offered to all users
-- We gain access to resources from a shared pool, we don't have visibility for other customers
-- A Fargate deployment still uses a cluster with a VPC which operates in AZs
-- ECS tasks are injected into the VPC with an ENI, they are running on the Fargate shared platform
-- With Fargate mode we only pay for the containers we using based on the resources they consume
+  * 태스크(컨테이너)가 **AWS 서비스에 접근할 권한**을 갖도록 하는 IAM Role입니다.
+  * 예: S3 읽기, DynamoDB 쓰기 등 애플리케이션 런타임 권한
+* **Task Execution Role(태스크 실행 역할)**:
 
-## EC2 vs ECS (EC2) vs Fargate
+  * 컨테이너 실행을 위해 필요한 “설치/준비 작업”을 ECS 에이전트가 수행할 때 쓰는 Role입니다.
+  * 대표적으로 이미지 Pull(ECR), 로그 드라이버/시크릿 주입(Secrets Manager/SSM) 등의 권한이 여기에 들어갑니다.
+* **Task(태스크)**:
 
-- If we are already using containers, we should use ECS
-- Containers make sense if we want to isolate applications
-- We generally pick EC2 mode if we have a large workload and the business is price conscious
-- Historically EC2 mode was giving the most value for the price if we were using saving plans. Nowadays we can have savings plan for Fargate and Lambda, so we should default to Fargate instead of EC2 mode
-- If we are overhead conscious, we should use Fargate
-- For small/burst workloads we should use Fargate as well. Same is recommended for batch/periodic workloads
+  * 태스크 정의를 실제로 실행한 인스턴스입니다.
+  * 단독 태스크는 기본적으로 **자동 확장(Scale)이나 고가용성(HA)을 스스로 보장하지 않습니다.**
+* **ECS Service(서비스)**:
+
+  * 태스크를 **몇 개 유지할지(desired count)**, 장애 시 재기동, 오토스케일링 등을 통해 **HA와 확장성**을 제공하는 구성입니다.
+  * “태스크를 서비스로 운영”할 때 핵심입니다.
+
+---
+
+## ECS 클러스터 모드
+
+클러스터 모드는 “운영 오버헤드를 누가 부담하느냐(내가 관리 vs AWS가 관리)” 관점입니다.
+
+### EC2 모드
+
+* 컨테이너 호스트로 **EC2 인스턴스**를 사용합니다(VPC 내부).
+* VPC 내부이므로 **멀티 AZ 구성**을 통해 가용성을 높일 수 있습니다.
+* 클러스터 생성 시 **EC2 용량(인스턴스 수/타입 등)** 을 준비해야 합니다.
+* **EC2 인스턴스 스케일링**과 **ECS 태스크 스케일링**은 보통 ASG/오토스케일링 조합으로 제어합니다.
+* 비용은 **컨테이너가 얼마나 돌든 EC2 인스턴스 비용을 먼저 지불**합니다(유휴 비용 발생 가능).
+
+### Fargate 모드
+
+* 컨테이너 호스트(EC2)를 **직접 관리하지 않습니다.**
+* AWS가 제공하는 **공유 Fargate 인프라** 위에서 태스크가 실행됩니다(다른 고객 워크로드는 보이지 않음).
+* 여전히 **VPC/AZ 기반**으로 동작합니다.
+* 태스크는 VPC에 **ENI가 붙어 “VPC 안으로 주입”**되는 형태로 네트워킹됩니다.
+* 비용은 **태스크가 사용한 CPU/메모리(실행 시간 기반)** 중심으로 과금됩니다.
+
+---
+
+## EC2 vs ECS(EC2 모드) vs Fargate 선택 가이드
+
+* 이미 컨테이너를 쓰고 있다면, 일반적으로 **ECS(또는 EKS)** 가 선택지입니다.
+* 컨테이너는 애플리케이션 격리/배포 일관성에 강점이 있습니다.
+
+### EC2 모드를 고려할 때
+
+* 워크로드가 크고 안정적이며, **단가 최적화(리소스 빈틈없이 채우기)** 를 강하게 원할 때.
+* 운영팀이 인스턴스/호스트 관리(패치, AMI, 용량 계획 등)를 감당할 수 있을 때.
+
+### Fargate를 기본값으로 두기 쉬운 경우
+
+* **운영 오버헤드를 최소화**하고 싶을 때(서버 관리 제거).
+* **소규모/버스트성/주기적(배치) 워크로드**처럼 사용량 변동이 큰 경우.
+* Savings Plans가 Fargate에도 적용 가능해지면서(사용자 메모 기준), “처음부터 Fargate” 선택이 더 흔해졌습니다.
