@@ -1,22 +1,41 @@
-# SWF - Simple Workflow Service
+# SWF (Amazon Simple Workflow Service)
 
-- Allows us to build workflows used to coordinate activities over distributed components (example: order flow)
-- Allows to build complex, automated and human involved workflows
-- It is the predecessor of Step Functions, it uses instances/servers
-- It allows the usage of the same patterns/anti patterns like long running workflows
-- AWS recommends defaulting to Step Functions instead of SWF, use SWF only if there is very specific workflow that requires it
-- Workflow: set of activities that carry out some objective together with the logic that coordinates the activities
-- Within workflows we have activity task and activity workers
-- A worker is program that we create to perform tasks
-- Workflows have deciders, applications that run on an unit of compute of AWS
-- Deciders schedule activity tasks, provides input data to activity workers, processes events and ends the workflow when the object is completed
-- SWF workflows can run for max 1 year
+* **분산 컴포넌트 간 작업을 조율하는 워크플로우를 구축**할 수 있는 서비스입니다. (예: 주문 처리 플로우)
+* **복잡한 자동화 워크플로우**뿐 아니라, **사람이 개입하는(휴먼 인 더 루프)** 형태의 워크플로우도 설계할 수 있습니다.
+* **Step Functions의 전신 격** 서비스이며, 현재는 일반적으로 **Step Functions 사용이 권장**됩니다.
+* SWF 자체는 관리형 서비스지만, **작업을 실행하는 Worker/Decider 애플리케이션은 사용자가 준비한 컴퓨팅 환경(EC2, 온프레미스 등)** 에서 구동합니다.
+  (즉, “SWF가 인스턴스를 쓴다”기보다는 “워크플로우 실행 로직을 돌리는 컴포넌트가 서버/인스턴스에서 돌아간다”가 정확합니다.)
+* **장기 실행 워크플로우(long-running workflow)** 같은 패턴을 지원합니다.
+* 워크플로우(Workflow): 여러 **Activity**가 함께 목표를 달성하도록 **조정 로직**을 포함한 전체 프로세스
+* 구성 요소
+
+  * **Activity Task / Activity Worker**
+
+    * **Worker**: Activity를 실제 수행하도록 사용자가 만든 프로그램
+  * **Decider**
+
+    * 워크플로우의 상태/이벤트 히스토리를 보고 다음에 어떤 Activity를 실행할지 결정
+    * Activity 스케줄링, 입력 데이터 전달, 이벤트 처리, 완료 판단 및 종료 수행
+* **워크플로우 실행 최대 기간: 1년**
+
+---
 
 ## SWF vs Step Functions
 
-- Default: Step Functions - they are serverless, they require lower admin overhead
-- AWS FLow Framework - way of defining workflows supported by SWF
-- External Signals to intervene in process, we need SWF
-- Launch child flows and have the processing return to parent, we need ot use SWF
-- Bespoke/complex decision logic: use SWF (custom decider application can be coded by us, we can implement whatever logic we want)
-- Mechanical Turk integration: use SWF (suggested AWS architecture)
+* 기본 선택: **Step Functions**
+
+  * **서버리스**이며 운영 오버헤드가 낮고, 최신 AWS 워크플로우 표준에 가깝습니다.
+* SWF에서 자주 언급되는 요소
+
+  * **AWS Flow Framework**: SWF 기반 워크플로우 정의를 돕는 프레임워크(언어별 SDK 형태)
+
+### SWF를 고려할 수 있는 경우(시험 관점에서 자주 나오는 포인트)
+
+* **외부 시그널(External Signals)을 통한 프로세스 개입**을 더 “직접적으로/유연하게” 다루는 모델이 필요할 때
+* **Child Workflow(자식 플로우) 실행 후, 부모 플로우로 결과를 자연스럽게 회수/연결**하는 방식이 강하게 요구될 때
+* **매우 복잡하거나 ‘완전 맞춤형’ 의사결정 로직**이 필요할 때
+
+  * SWF는 **Decider를 코드로 구현**하므로, 상태 머신 수준을 넘어서는 로직을 원하는 대로 구성 가능
+* **Amazon Mechanical Turk 연동**이 전제인 아키텍처(전통적으로 SWF 예시가 많음)
+
+요약하면, **대부분은 Step Functions가 정답**이고, 문제에서 **“SWF만의 요구(맞춤 Decider, 특정 통합/동작 방식)”** 를 강하게 암시할 때 SWF를 선택하는 식으로 접근하면 됩니다.
