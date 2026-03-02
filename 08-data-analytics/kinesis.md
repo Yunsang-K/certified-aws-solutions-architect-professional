@@ -1,64 +1,69 @@
-# Kinesis
+## Kinesis 
 
-- Is a scalable streaming service, designed to ingest lots of data
-- Producers send data into a Kinesis stream, the stream being the basic entity of Kinesis
-- Streams can scale from low to near infinite data rates
-- It is a public service and it is highly available in a region by design
-- Persistence: streams store by default a 24H moving window of data
-- Kinesis include storage to be able to ingest and retain it for 24H by default (can be increased to 365 days at additional cost)
-- Multiple consumers can access the data from that moving window
+### 1) Kinesis 개요
 
-## Kinesis Data Streams
+* **Amazon Kinesis**는 대규모 **스트리밍 데이터 수집·처리**를 위한 서비스군입니다.
+* 프로듀서가 데이터를 보내고, 컨슈머가 이를 읽어 처리합니다.
+* **다중 컨슈머(여러 소비자 애플리케이션)**가 동일 스트림을 각자 속도로 읽을 수 있다는 점이 메시지 큐(SQS 등)와 자주 대비됩니다.
+* **데이터 보관(retention)**: Kinesis Data Streams는 기본 24시간 보관(유지 기간 확장 가능)으로 “이동 윈도우” 형태의 재처리가 가능합니다.
 
-- Kineses Data Streams are using shards architecture for scaling, initially there is one shard, additional shards can be added over time to increase performance
-- Each shard provides its own capacity, each shard has 1MB/s ingestion capacity, 2MB/s consumption capacity
-- Shards directly affect the price of the Kinesis stream, we have to pay for each shard
-- Pricing is also affected by the length of the storage window. By default is 24H, it can be increased to 365 days
-- Data is stored in Kinesis Data Records (1MB), these records are distributed across shards
+---
 
-## SQS vs Kinesis Data Streams
+### 2) Kinesis Data Streams (KDS)
 
-- Is it about ingestion (Kinesis) of data or about decoupling, worker pools (SQS)
-- SQS usually has 1 production group, 1 consumption group
-- SQS is designed for decoupling and asynchronous communication
-- SQS does not have the concept of persistence, no window for persistence
-- Kinesis is designed for huge scale ingestion, having multiple consumers with different rate of consumption
-- Kinesis is recommended for ingestion, analytics, monitoring, click streams
+* Kinesis에서 “**스트림(Stream)**”이 기본 단위입니다.
+* 확장은 전통적으로 **샤드(Shard)** 기반(샤드 수가 처리량을 결정)으로 설명됩니다.
+* **샤드 단위 용량(시험에서 자주 등장)**
 
-## Kinesis Data Firehose
+  * 샤드당 **쓰기(ingest)**, **읽기(consume)** 처리량 제한이 있으며, 샤드를 늘리면 총 처리량이 증가합니다.
+* 비용은 일반적으로 **샤드 수**, **보관 기간**, **요청/데이터 처리량** 등의 요소에 영향을 받습니다.
+* 데이터는 레코드 단위로 저장되며, 샤드에 분산됩니다(파티션 키로 라우팅되는 개념이 출제 포인트로 자주 나옵니다).
 
-- Used to provide data ingestion for other AWS services such as S3
-- Fully managed service used to load data for data lakes, data stores and analytics services
-- Data Firehose scales automatically, it is serverless and resilient
-- It is not a real time product, it is a Near Real Time product with a deliver product of ~60 seconds
-- Supports transformation of data on the fly using Lambda. This transformation can add latency
-- Firehose is a pay as you go service, we pay per volume of data
-- Firehose supported destinations:
-    - HTTP endpoints (third party providers)
-    - Splunk (has direct support for it)
-    - RedShift
-    - OpenSearch (ElasticSearch)
-    - S3
-- Firehose can accept data directly from producers or from Kinesis Data Streams
-- Firehose receives the data in real-time, but the ingestion is buffered
-- Firehose buffer by default waits for 1MB of data in 60 seconds before delivering to consumer. For higher load, it will deliver every time there is an 1MB chunk of data
-- Data is sent directly form Firehose to destination, exception being Redshift, where data is stored in an intermediary S3 bucket
-- Firehose use cases:
-    - Persistence for data coming into Kinesis Data Streams
-    - Storing data in a different format (ETL)
+---
 
-## Kinesis Data Analytics
+### 3) SQS vs Kinesis Data Streams (시험식 구분)
 
-- It is a real-time data processing product using SQL
-- The product ingests data from Kinesis Data Streams or Firehose
-- After the data is processed, it can be sent directly to destinations such as:
-    - Firehose (data becoming near-real time)
-    - Kinesis Data Streams
-    - AWS Lambda
-- Kinesis Data Analytics architecture:
-    ![Kinesis Data Analytics architecture](images/KinesisDataAnalytics.png)
-- Kinesis Data Analytics use cases:
-    - Anything using stream data which needs real-time SQL processing
-    - Time-series analytics: election data, e-sports
-    - Real-time dashboards: leader boards for games
-    - Real-time metrics
+* **SQS**
+
+  * 목적: **디커플링**, 비동기 작업 분배, 워커 풀 구성
+  * 일반적으로 “한 번 처리(워크 아이템)” 성격이 강함
+  * 컨슈머 그룹(워커)이 메시지를 가져가면 처리 후 삭제(기본 설계)
+* **Kinesis Data Streams**
+
+  * 목적: **대규모 스트리밍 수집/분석**, 클릭스트림/로그/모니터링 같은 지속 이벤트
+  * **여러 컨슈머가 동일 데이터 흐름을 각자 읽음**(재생/재처리 개념 포함)
+  * 보관 기간(retention) 동안 다시 읽어서 재처리 가능
+
+> 한 줄 결론: **작업 큐/비동기 분배 = SQS**, **스트리밍 수집·다중 소비·재처리 = Kinesis**
+
+---
+
+### 4) Kinesis Data Firehose
+
+* 목적: 스트리밍 데이터를 **대상 서비스로 “적재(delivery)”**하는 완전관리형 파이프라인
+* **서버리스/자동 확장** 성격으로 운영 부담이 적습니다.
+* **실시간(Real-time)이라기보다 Near Real-time**로, 버퍼링 후 배달(지연이 생김).
+* **변환(Transformation)**: Lambda로 변환 가능하지만, 변환은 지연과 실패 처리 포인트가 될 수 있습니다.
+* 주요 대상: **S3, Redshift, OpenSearch, Splunk, HTTP 엔드포인트** 등
+
+  * Redshift는 일반적으로 **중간 S3 버킷을 거쳐 적재**되는 형태로 설명되는 경우가 많습니다(아키텍처 문제에서 자주 나옴).
+
+---
+
+### 5) Kinesis Data Analytics
+
+* 목적: 스트림 데이터에 대한 **실시간 처리**(주로 SQL 기반 스트리밍 분석)
+* 입력: **Kinesis Data Streams 또는 Firehose**
+* 출력: **Kinesis Data Streams / Firehose / Lambda** 등으로 전달 가능
+* 대표 유스케이스: **실시간 대시보드, 리더보드, 시계열 집계, 이상 탐지용 집계 전처리** 등
+
+---
+
+## SAP-C02에서 자주 나오는 선택 기준(암기 포인트)
+
+* “**S3/Redshift/OpenSearch로 로그를 거의 실시간으로 적재**하고 싶고 운영을 줄이고 싶다” → **Firehose**
+* “**여러 애플리케이션이 동일 이벤트 스트림을 각각 소비**해야 한다” → **Kinesis Data Streams**
+* “**스트림을 SQL로 실시간 집계해서 결과를 다른 곳으로 보내고 싶다**” → **Kinesis Data Analytics**
+* “**비동기 작업 분배/디커플링/재시도/워커 풀**” → **SQS**
+
+원하면, 위 내용을 **‘시험 보기형’(키워드 → 정답 서비스)**으로 10문제 정도 만들어서 바로 훈련용으로도 정리해줄게요.
