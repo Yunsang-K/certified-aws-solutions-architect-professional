@@ -1,13 +1,15 @@
-# Amazon Athena
+## Amazon Athena
 
-- It is a serverless interactive querying service
-- We can take data stored in S3 and perform ad-hoc queries on the data paying only for the data consumed
-- Athena uses a process named **Schema-on-read** - table-like translation
-- Original data in S3 is never changed, it remains in its original form. It is translated to the predefined schema when it is read for processing
-- Supported formats by Athena: XML, JSON, CSV/TSV, AVRO, PARQUET, ORC, Apache, CloudTrail, VPC Flowlogs, etc. Supports standard formats of structured data, semi-structured and unstructured data
-- "Tables" are defined in advance in a data catalog and data is projected through when read. It allows SQL-like queries on data without transforming source data
-- Athena has no infrastructure. We don't need set up anything in advance
-- Athena is ideal for situations where loading/transforming data isn't desired
-- It is preferred for querying AWS logs: VPC Flow Logs, CloudTrail, ELB logs, cost reports, etc.
-- Can query data form Glue Data Catalog and Web Server Logs
-- Athena Federated Query: Athena now supports querying other data sources than S3. Requires a data source connector (AWS Lambda)
+* **서버리스(Serverless) 인터랙티브 쿼리 서비스**입니다.
+* **S3에 저장된 데이터**를 대상으로 **애드혹(ad-hoc) 쿼리**를 실행할 수 있고, **스캔(소비)된 데이터 양에 대해서만 과금**됩니다.
+* Athena는 **Schema-on-read(읽기 시 스키마 적용)** 방식을 사용합니다(테이블처럼 해석/투영).
+* S3의 **원본 데이터는 변경되지 않습니다.** 데이터는 원본 형태 그대로 유지되고, **처리 시점에 미리 정의한 스키마로 해석**됩니다.
+* Athena가 지원하는 포맷 예: **XML, JSON, CSV/TSV, Avro, Parquet, ORC**, (로그/대표 데이터로) **CloudTrail, VPC Flow Logs** 등.
+
+  * 구조화/반구조화(및 일부 비정형) 데이터에 대해 **표준적인 포맷 중심으로 지원**합니다.
+* “테이블”은 보통 **데이터 카탈로그(예: AWS Glue Data Catalog)** 에 **사전에 정의**되고, Athena는 쿼리 시 데이터를 그 스키마로 **투영(project)** 하여 **SQL 유사 쿼리**를 가능하게 합니다(소스 변환 없이).
+* **인프라를 직접 운영/프로비저닝할 필요가 없습니다.** (클러스터 구성/서버 셋업 불필요)
+* **데이터를 로딩/변환(ETL)하고 싶지 않거나**, 빠르게 탐색/분석만 하고 싶은 경우에 적합합니다.
+* 대표적으로 **AWS 로그 분석**에 자주 사용됩니다: **VPC Flow Logs, CloudTrail, ELB/ALB 로그, Cost & Usage Report** 등.
+* **Glue Data Catalog**에 정의된 테이블을 조회할 수 있고, **웹 서버 로그** 같은 S3 로그도 SQL로 분석할 수 있습니다.
+* **Athena Federated Query**: S3 외의 데이터 소스도 쿼리할 수 있습니다. 보통 **데이터 소스 커넥터**가 필요하며, 이는 **AWS Lambda 기반**으로 동작합니다.
