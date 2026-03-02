@@ -1,18 +1,41 @@
-# AWS X-Ray
+# AWS X-Ray (SAP-C02 기준)
 
-- It is a distributed tracing application. It designed to track sessions through an application
-- X-Ray takes data from many services (API Gateway, Lambda, DynamoDB) as part of an application and gives on single overview of the session flow
-- Fundamental concepts of X-Ray:
-    - **Tracing Header**: when an user connects to an application with X-Ray enabled, a **tracing ID** is generated an embedded into a tracing header. This header is used to track the request across all supported services
-    - **Segments**: supported services send data to X-Ray using segments. Segments are data blocks containing host/ip, request, response, work done (times), issues information
-    - **Subsegments**: segments can contain subsegments for more granularity. This can contain details to other services as part of the application component
-    - **Service Graph**: JSON document detailing services and resources which make up the application
-    - **Service Map**: visual representation of a service graph by the X-Ray console
-- In order to provide X-Ray data to the AWS X-Ray service we can do the following:
-    - EC2: install X-Ray Agent
-    - ECS: agent is installed in any task
-    - Lambda: enable X-Ray
-    - Beanstalk: agent is preinstalled
-    - API Gateway: can be enabled per stage option
-    - SNS and SQS: can be enabled
-- Services require IAM permission in order ot send data to X-Ray service
+* **AWS X-Ray**는 **분산 추적(distributed tracing)** 서비스입니다. 애플리케이션 내에서 **요청(세션)이 여러 구성요소/서비스를 거치며 흐르는 경로를 추적**하도록 설계되었습니다.
+* X-Ray는 **API Gateway, Lambda, DynamoDB** 등 여러 AWS 서비스에서 수집한 추적 데이터를 기반으로, **하나의 요청이 시스템을 통과하는 전체 흐름을 단일 뷰로 시각화/분석**할 수 있게 합니다.
+
+## X-Ray 핵심 개념
+
+* **Tracing Header(추적 헤더)**
+  사용자가 X-Ray가 활성화된 애플리케이션에 요청을 보내면 **Trace ID(추적 ID)** 가 생성되어 **추적 헤더에 포함**됩니다. 이 헤더를 통해 지원되는 서비스 전반에서 요청을 **연속적으로 추적**합니다.
+
+* **Segments(세그먼트)**
+  X-Ray 지원 서비스가 X-Ray로 전송하는 **데이터 단위(블록)** 입니다. 보통 다음 정보를 포함합니다.
+
+  * 호스트/아이피
+  * 요청/응답 정보
+  * 수행 작업과 시간(지연)
+  * 오류/예외 등 이슈 정보
+
+* **Subsegments(서브세그먼트)**
+  세그먼트 내부에 포함될 수 있는 **더 세밀한 추적 단위**입니다. 애플리케이션 컴포넌트가 호출하는 **다른 서비스/다운스트림 호출 세부 정보**를 담아 **추적의 정밀도**를 높입니다.
+
+* **Service Graph(서비스 그래프)**
+  애플리케이션을 구성하는 **서비스와 리소스 관계를 표현한 JSON 문서**입니다.
+
+* **Service Map(서비스 맵)**
+  X-Ray 콘솔에서 **Service Graph를 시각화한 화면**입니다(토폴로지 형태로 표시).
+
+## X-Ray로 데이터 전송(수집) 방식
+
+X-Ray 서비스에 추적 데이터를 보내기 위해 컴퓨팅/통합 지점별로 다음 설정을 사용합니다.
+
+* **EC2**: X-Ray **Agent 설치**
+* **ECS**: 각 **Task(또는 사이드카 형태)** 에서 에이전트 동작
+* **Lambda**: 함수에서 **X-Ray 활성화**
+* **Elastic Beanstalk**: 에이전트 **사전 설치(기본 포함)**
+* **API Gateway**: **스테이지(stage) 단위**로 X-Ray 활성화 가능
+* **SNS / SQS**: X-Ray 추적 **활성화 가능**
+
+## 권한(IAM)
+
+* 각 서비스/컴포넌트가 X-Ray로 데이터를 전송하려면 **IAM 권한**이 필요합니다(추적 데이터 업로드 권한).
