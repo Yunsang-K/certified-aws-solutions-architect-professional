@@ -1,56 +1,83 @@
-# AWS IoT
+## AWS IoT
 
-- IoT - Internet of Things
+### 1) AWS IoT Core
 
-## AWS IoT Core
+* **역할**: 수백만 IoT 디바이스를 AWS에 **안전하게 연결/관리**(인증, 메시징, 라우팅)하는 핵심 서비스.
+* **디바이스 등록/보안 통신**: 디바이스를 “Thing”으로 등록하고, **X.509 인증서/정책(IoT Policy)** 기반으로 권한을 부여해 안전하게 통신.
+* **프로비저닝/업데이트/제어**: 대규모 디바이스를 온보딩(Provisioning)하고 원격으로 제어할 수 있는 기반 제공.
+* **Device Shadow(디바이스 섀도우)**:
 
-- AWS IoT Core is a product set in AWS, used for managing millions of IoT devices
-- IoT devices can be temp, wind, water sensors, light sensors, valve control sensors, etc.
-- All of these need to be registered into a system to allow secure communication for managing them: provisioning, updates and control
-- Communication to or from devices is likely to be unreliable, so AWS provides *device shadows*: virtual representations of actual devices, having the same configuration registered for the actual device. We can read from them the last communicated data, essentially the device communicates with the shadow, the last registered data can be retrieved anytime afterwards
-- Device messages are sent JSON format, using MQTT protocols
-- AWS IoT provides rules: event-driven integration with other AWS Services
-- AWS IoT architecture:
-    [AWS IoT architecture](images/ElasticTranscoder&AWSIoT.png)
+  * 디바이스의 **가상 상태(Desired/Reported)** 를 클라우드에 유지.
+  * 네트워크가 불안정해도, 앱은 섀도우를 통해 **마지막 상태**를 읽거나 **원하는 상태(Desired)** 를 써두고 디바이스가 복구되면 동기화 가능.
+* **프로토콜/메시지**: 일반적으로 **MQTT**(경량 pub/sub) 사용, payload는 보통 JSON.
+* **Rules Engine(규칙)**:
 
-## AWS IoT Device Management
+  * 메시지 수신 시 SQL 유사 룰로 필터/변환 후 **Lambda, DynamoDB, S3, Kinesis, SNS/SQS** 등으로 이벤트 기반 연동.
 
-- Helps us to register, organize, monitor and remotely manage IoT devices at scale
+---
 
-## AWS IoT Device Defender
+### 2) AWS IoT Device Management
 
-- Used to audit configurations, authenticate devices, detect anomalies and receive alerts to help us secure our IoT device fleet
+* **역할**: 디바이스를 **등록/그룹화/모니터링/원격 관리**하는 운영 기능.
+* 예) 디바이스 플릿 정리, 대량 작업(잡) 기반 운영, 상태/인벤토리 관리 등 “운영자 관점” 기능.
 
-## AWS IoT 1-Click
+---
 
-- Used to launch AWS Lambda functions from IoT devices
-- We can also create actions in the cloud or on-premises
+### 3) AWS IoT Device Defender
 
-## AWS Greengrass
+* **역할**: IoT 환경의 **보안 감사 + 이상 탐지**.
+* 예) 정책/설정 컴플라이언스 감사, 비정상 트래픽/행동 패턴 탐지, 알림을 통한 대응.
 
-- AWS Greengrass is an extension of the services provided by AWS IoT, moving those services closer to the edge
-- Greengrass allow some services like compute, messages, data management, sync and ML capabilities to run from edge devices
-- Devices with Greengrass Core software can locally run Lambda functions or containers => compute can run locally without leaving the local network
-- Greengrass provides local device shadows which are synced back to AWS
-- Allows messaging using MQTT
-- Allows local hardware access for Lambda functions
+---
 
-## AWS IoT Analytics
+### 4) AWS IoT 1-Click
 
-- Used to run analytics on IoT data and get insights to make better and more accurate decisions
-- Supports up to petabyte of data from millions of devices
+* **역할**: 버튼/간단 디바이스에서 **원클릭으로 Lambda 실행** 같은 액션 트리거.
+* “디바이스에서 간단히 이벤트 발생 → 클라우드(또는 온프렘 액션) 실행”에 초점.
 
-## AWS IoT Events
+---
 
-- Used to detect and respond to events from IoT sensors and applications
-- We can ingest data from multiple sources to detect the state of our processes or devices and proactively manage maintenance schedules
+### 5) AWS Greengrass
 
-## AWS IoT SiteWise
+* **역할**: IoT 기능을 **엣지(로컬 네트워크)** 로 확장.
+* **엣지 컴퓨팅**: Greengrass Core 탑재 디바이스가 로컬에서 **Lambda/컨테이너 실행** 가능 → 지연 감소/오프라인 대응.
+* **로컬 메시징(MQTT)** 및 **로컬 디바이스 섀도우** 제공, 이후 AWS와 동기화 가능.
+* **로컬 하드웨어 접근**: 엣지에서 센서/액추에이터 직접 제어에 유리.
 
-- Simplifies collecting, organizing and analyzing industrial equipment data
-- We can organize sensor data streams from multiple production lines and facilities to drive efficiencies across locations
+---
 
-## AWS IoT TwinMaker (formerly AWS IoT Things Graph)
+### 6) AWS IoT Analytics
 
-- Used to create digital twins of real-world systems such as buildings, factories, industrial equipment and production lines
-- We used this to quickly pinpoint and address equipment and process anomalies from the plant floor to improve worker productivity and efficiency
+* **역할**: IoT 데이터에 대해 **정제/저장/분석 파이프라인**을 제공해 인사이트 도출.
+* 대규모(수백만 디바이스, 대용량 데이터) 분석을 전제로 설계된 분석 특화 영역.
+
+---
+
+### 7) AWS IoT Events
+
+* **역할**: 센서/애플리케이션 데이터로부터 **상태(state) 기반 이벤트 감지** 및 대응.
+* 예) “온도 상승 + 진동 증가 + 특정 시간대” 같은 조건으로 장비 이상 상태를 판별하고 알림/워크플로 실행.
+
+---
+
+### 8) AWS IoT SiteWise
+
+* **역할**: **산업 설비(OT)** 데이터 수집/정리/분석을 단순화.
+* 공장/생산 라인 등에서 센서 스트림을 구조화해 설비 가시성과 효율을 높이는 데 초점.
+
+---
+
+### 9) AWS IoT TwinMaker (구 Things Graph 계열)
+
+* **역할**: 공장/빌딩/설비 같은 실세계 시스템의 **디지털 트윈**을 구성.
+* 여러 데이터 소스를 연결해 3D/모델 기반으로 상태를 시각화하고, 이상 징후/병목을 빠르게 파악.
+
+---
+
+## 시험에서 자주 나오는 “구분 포인트”
+
+* **IoT Core**: 연결/인증/메시징/라우팅의 중심 (MQTT + Rules + Shadow)
+* **Greengrass**: 엣지에서 실행(로컬 Lambda/컨테이너, 오프라인, 로컬 섀도우)
+* **Defender**: 보안 감사/이상 탐지
+* **Events**: 상태 머신/이벤트 감지(조건 충족 시 알림/액션)
+* **SiteWise/TwinMaker**: 산업(OT) 데이터 모델링/디지털 트윈
