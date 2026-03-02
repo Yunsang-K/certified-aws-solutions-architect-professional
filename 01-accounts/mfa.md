@@ -1,9 +1,23 @@
-# Multi-Factor Authentication (MFA)
+# 다중요소 인증(MFA: Multi-Factor Authentication)
 
-- **Factor**: different piece of evidence which proves the identity
-- Factors:
-    - **Knowledge**: something we as users know: username, password
-    - **Possession**: something we as users have: bank card, MFA device/app
-    - **Inherent**: something we are, example: fingerprint, face, voice, iris
-    - **Location**: a location (physical) or which network we are connected to (corporate wifi)
-- More factors means more security, harder to bypass by an intruder
+* **요소(Factor)**: 사용자의 **신원을 증명하는 서로 다른 종류의 증거**를 의미합니다.
+
+## 요소의 종류
+
+* **지식(Knowledge)**: 사용자가 **알고 있는 것**
+
+  * 예: 사용자명, 비밀번호, PIN
+* **소지(Possession)**: 사용자가 **가지고 있는 것**
+
+  * 예: 은행 카드, OTP 토큰, 인증 앱(Authenticator), 보안키(FIDO2)
+* **고유(Inherent)**: 사용자가 **그 자체로 가진 것(생체정보)**
+
+  * 예: 지문, 얼굴, 음성, 홍채
+* **위치(Location)**: 사용자의 **접속 위치/네트워크**
+
+  * 예: 특정 물리적 위치, 사내 Wi-Fi/VPN 접속 여부
+
+## 핵심 요점
+
+* **서로 다른 요소를 더 많이 조합할수록 보안이 강해집니다.**
+* 공격자가 한 가지(예: 비밀번호)를 탈취하더라도, **다른 요소까지 동시에 뚫기는 훨씬 어려워집니다.**
