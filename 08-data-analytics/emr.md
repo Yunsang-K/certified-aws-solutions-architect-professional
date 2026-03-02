@@ -1,54 +1,76 @@
-# EMR - Elastic Map Reduce
+## EMR (Elastic MapReduce)
 
-## MapReduce 101
+아래 내용은 작성하신 노트를 유지하면서, **시험에서 자주 걸리는 포인트(정확성/표현/비교 기준)** 위주로 다듬은 버전입니다.
 
-- Is a framework designed to allow processing huge amount of data in a parallel, distributed way
-- Data Analysis Architecture: huge scale, parallel processing
-- MapReduce has two main phases: map and reduce
-- It also has to optional phases: combine and partition
-- At high level the process of map reduce is the following:
-    - Data is separated into splits
-    - Each split can be assigned to a mapper
-    - The mapper perform the operation at scale
-    - The data is recombined after the operation is completed
-- HDFS (Hadoop File System):
-    - Traditionally stored across multiple data nodes
-    - Highly fault-tolerant - data is replicated between nodes
-    - Named Nodes: provide the namespace for the file system and controls access to HDFS
-    - Block: a segment of data in HDFS, generally 64 MB
+---
 
-## Amazon EMR Architecture
+## 1) MapReduce / HDFS 핵심 보완
 
-- Is a managed implementation of Apache Hadoop, which is a framework for handling big data workloads
-- EMR includes other elements such as Spark, HBase, Presto, Flink, Hive, Pig
-- EMR can be operated long term, or we can provision ad-hoc (transient) clusters for short term workloads
-- EMR runs in one AZ only within a VPC using EC2 for compute
-- It can use spot instances, instance fleets, reserved and on-demand instances as well
-- EMR is used for big data processing, manipulation, analytics, indexing, transformation, etc.
-- EMR architecture:
-    ![EMR architecture](images/EMRArchitecture.png)
-    - Each cluster requires at least one **master node**. This manages the cluster and distributes workloads and acts as the NAME node within MapReduce (we SSH into this if necessary)
-    - Historically we could have only one master node, nowadays we can have 3 master nodes
-    - **Core nodes**: cluster can have many core nodes. They are used for tracking task, we don't want to destroy these nodes
-    - Core nodes also managed to HDFS storage for the cluster. The lifetime of HDFS is linked to the lifetime of the core nodes/cluster
-    - **Task nodes**: used to only run tasks. If they are terminated, the HDFS storage is not affected. Ideally we use spot instances for task nodes
-    - EMRFS: file system backed by S3, can persist beyond the lifetime of the cluster. Offers lower performance than HDFS, which is based on local volumes
+### MapReduce 흐름
 
-## Amazon EMR Serverless
+* 개념 자체는 맞습니다. 시험에서 더 자주 나오는 표현은:
 
-- It is a deployment option for Amazon EMR that provides a serverless runtime environment
-- With EMR Serverless we don't have to configure, optimize, secure or operate clusters to run applications with frameworks such as Spark and Hive
-- Job run:
-    - Is a request submitted to an EMR Serverless application that the application asynchronously executes and tracks it until completion
-    - When a job is submitted we must specify an IAM role that will provide required access for the job to other services such as S3
-    - We can submit different jobs at the same time with different runtime roles
-- Workers:
-    - EMR Serverless internally uses workers to execute our workloads
-    - The default size of this workloads depends on the application type and EMR version
-    - When we submit a job, EMR Serverless computes the resources that the application needs for the job and schedules workers
-    - EMR Serverless automatically scales workers up or down based on the workload and parallelism required at every stage of the job
-- Pre-initialized capacity:
-    - Used to keep workers initialized and ready to respond in seconds
-    - Effectively creates a warm pool of workers for an application
-- EMR Studio:
-    - It is the user console where we manage our EMR Serverless applications
+  * **Input Split → Map → Shuffle/Sort → Reduce → Output**
+* **Combine(Combiner)**: 선택 단계이며, Mapper 출력의 “로컬 pre-aggregation”으로 네트워크 전송량을 줄이는 용도(정확성은 연산의 결합법칙/교환법칙 성립 여부에 좌우됨).
+* **Partitioner**: Map 출력 키를 기준으로 “어떤 Reducer로 보낼지” 결정(키 기반 데이터 분배).
+
+### HDFS 용어 정확화
+
+* **NameNode**: 메타데이터/네임스페이스 관리(파일-블록 매핑), 클러스터의 “두뇌”.
+* **DataNode**: 실제 블록 저장/복제 수행.
+* **Block 크기**: “일반적으로 64MB”는 구버전/설정에 따라 다릅니다. 실무/현대 Hadoop에서는 **128MB가 흔한 기본값**인 경우가 많습니다(설정 가능). 시험에서는 “설정 가능한 블록 단위 저장”이 핵심입니다.
+
+---
+
+## 2) Amazon EMR (클러스터) 아키텍처 보완
+
+### EMR = 관리형 빅데이터 프레임워크 플랫폼
+
+* Hadoop뿐 아니라 Spark, Hive, Presto(Trino 계열), Flink, HBase 등을 “클러스터 형태”로 운영 가능 — 이 요약은 좋습니다.
+
+### “EMR은 한 AZ만” 표현 주의
+
+* **EMR 클러스터는 VPC 서브넷(=특정 AZ)에 배치**되는 게 일반적이지만,
+* **멀티 마스터(3개)로 HA를 구성하는 경우, 서로 다른 AZ에 분산**시키는 구성이 가능합니다(EMR의 HA 옵션).
+  → 시험에서 자주 나오는 함정이라 “항상 한 AZ”로 단정하면 위험합니다.
+
+### 노드 역할(정확 표현)
+
+* **Master node(Primary)**
+
+  * 클러스터 제어/스케줄링, (Hadoop일 때) 리소스 관리(YARN), HDFS 메타(구성에 따라).
+  * “MapReduce의 NameNode 역할”이라고 딱 고정하기보다 “클러스터 컨트롤 플레인 + (Hadoop 구성요소 구동)” 정도가 더 안전합니다.
+* **Core nodes**
+
+  * **HDFS 저장(DataNode 역할)** + 태스크 실행 가능.
+  * HDFS 내구성은 core 노드/스토리지 설정에 종속(노드 종료 시 영향 큼).
+* **Task nodes**
+
+  * **컴퓨트 전용(스토리지 없음)**. Spot로 쓰기 적합(중단돼도 HDFS 영향 상대적으로 적음).
+
+### 스토리지 포인트(시험 빈출)
+
+* **HDFS(인스턴스 스토리지/EBS 기반)**: 성능 좋지만 클러스터 수명에 종속.
+* **EMRFS(S3)**: 클러스터 종료 후에도 데이터 유지. 내구성/확장성 좋지만 워크로드에 따라 성능/일관성/메타데이터 오버헤드 고려.
+
+---
+
+## 3) EMR Serverless 보완
+
+정리한 내용은 전반적으로 맞고, 시험 관점에서 아래를 추가하면 좋습니다.
+
+* **“클러스터 관리 없음”**: 노드/오토스케일/패치/용량 계획을 서비스가 처리.
+* **비용 모델**: 기본적으로 **실행한 vCPU/메모리(및 스토리지) 사용량 기반 과금**(상시 클러스터보다 “유휴 비용”을 줄이기 좋음).
+* **IAM Runtime Role**: Job 제출 시 역할 지정(각 job마다 다른 권한 가능) — 작성하신 내용이 정확합니다.
+* **Pre-initialized capacity**: 콜드스타트 완화(시험에서는 “지연을 줄이기 위한 warm pool”로 자주 출제).
+
+---
+
+## 4) 시험에서 자주 나오는 선택 기준(EMR vs EMR Serverless)
+
+* **EMR(클러스터)**가 유리한 경우
+
+  * 장시간 상시 운영, 세밀한 튜닝/커스텀 AMI/부가 데몬 운영, 특정 네트워크/보안 요구(고정된 클러스터 운영 모델)
+* **EMR Serverless**가 유리한 경우
+
+  * 간헐적/배치성 Spark·Hive 작업, 운영 오버헤드 최소화, 자동 확장/종량 과금으로 비용 최적화
