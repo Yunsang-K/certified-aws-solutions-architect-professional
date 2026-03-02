@@ -1,11 +1,18 @@
-# Cost Allocation Tags
+## Cost Allocation Tags (비용 할당 태그)
 
-- Are tags that we can enable to provide additional information for any billing report in AWS
-- Cost Allocation Tags needs to enabled individually per account or per organization from the management account
-- There 2 different form of Cost Allocation Tags:
-    - AWS generated - example: `aws:createdBy` or `aws:cloudformation:stack-name`. These are added automatically by AWS if cost allocation tags are enabled
-    - User defined tags: `user:something`
-- Both type of tags will be visible in AWS cost reports and can be used as a filter
-- Cost Allocation Tags appear only int he Billing Console
-- After enabling Cost Allocation Tags, it can take up to 24 hours to be visible and active
-- Cost Allocation Tags are not added retroactively
+* **비용 할당 태그(Cost Allocation Tags)**는 AWS **청구/비용 리포트**에서 **추가 차원(분류 기준)**을 제공하기 위해 활성화할 수 있는 태그입니다.
+* **계정 단위** 또는 **Organizations 단위**로 활성화가 필요하며, Organizations를 쓰는 경우 **관리 계정(Management account)**에서 활성화할 수 있습니다.
+* 비용 할당 태그는 **2종류**가 있습니다.
+
+  * **AWS 생성 태그(AWS generated)**: 예) `aws:createdBy`, `aws:cloudformation:stack-name`
+
+    * 비용 할당 태그를 활성화해두면, AWS가 자동으로 제공/노출하는 유형입니다.
+  * **사용자 정의 태그(User defined)**: 예) `user:something`
+
+    * 사용자가 리소스에 직접 붙인 태그를 비용 리포트에서 사용하도록 “비용 할당 태그로” 활성화하는 개념입니다.
+* 두 유형 모두 **비용/청구 리포트에서 컬럼으로 보이거나 필터 조건으로 사용**할 수 있습니다.
+* 비용 할당 태그는 **Billing Console(청구 콘솔)**에서만 보입니다.
+* 활성화 후 **최대 24시간** 정도 걸려서 리포트에서 **보이거나 적용**될 수 있습니다.
+* **소급 적용되지 않습니다**: 활성화 이전 기간의 과거 비용 데이터에 대해 자동으로 태그가 붙어 분해되지는 않습니다.
+
+(시험 포인트) 비용 리포트에서 **태그 기반 비용 분해**가 필요하면 “리소스에 태그를 달기”만으로 끝이 아니라, **Cost Allocation Tags에서 해당 태그 키를 활성화**해야 한다는 점이 자주 함정입니다.
