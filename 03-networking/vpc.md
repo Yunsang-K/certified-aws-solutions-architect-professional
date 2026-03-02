@@ -1,162 +1,157 @@
-# VPC - Virtual Private Cloud
+## 1) Public 서비스 vs Private 서비스
 
-## Public vs Private Services
+* **Public 서비스**: 퍼블릭 엔드포인트(인터넷 경로)로 접근하는 서비스
+* **Private 서비스**: VPC 내부(사설 네트워크)에서 동작하는 서비스
+* Public/Private 여부와 별개로 **IAM 정책/리소스 정책/네트워크 정책**으로 접근 제어 가능
+* **VPC**: 기본적으로 인터넷과 격리된 논리적 네트워크. **허용 설정을 하지 않으면** 인터넷에서 VPC 내부로 직접 도달 불가
+* **Internet Gateway(IGW)**: VPC에 연결하면 VPC 리소스가 인터넷과 통신 가능(단, 라우팅/퍼블릭 IPv4 등 조건 필요)
 
-- Public service: a service which is accessed by using public endpoints
-- Private service: a service which runs inside a VPC
-- Either private or public, every service can have permissions in order to be accessible
-- VPC: private network isolated from the internet. Can't communicate to the network unless we are allowing it. Nothing from the internet can reach the services from a VPC as long as we do not configure it otherwise
-- Internet Gateway: we can connect it to a VPC, this will allow the services in the VPC to communicate with the public internet
+**시험 함정**
 
-## DHCP in a VPC
+* “IGW만 붙이면 인터넷 된다”는 오답. **(1) 퍼블릭 IPv4/EIP, (2) 서브넷 라우트테이블의 0.0.0.0/0 → IGW, (3) SG/NACL 허용**이 맞물려야 함.
 
-- DHCP - Dynamic Host Configuration Protocol: offers auto configuration for network resources
-- Every device has a hard-coded MAC address (Layer 2 address)
-- DHCP begins with a L2 broadcast to discover a DHCP server on the local network
-- Once discovered a DHCP server and a DHCP clients communicate, meaning that the client will get in the end an IP address, a Subnet Mask and Default Gateway address (L3 configuration)
-- DHCP also configures which DNS server should a resource use in a VPC
-- Also configures NTP servers, NetBios Name Servers and Node types
-- When we are setting which DNS service to use in a VPC we can either explicitly provide values or we can set `AmazonProvidedDNS`
-- We also get allocated 1 or 2 DNS names for the services in the VPC. One can be public if the instance has a public IP address allocated
-- Custom DNS names: we can give custom DNS names to EC2 instances if we use our own custom DNS servers. To accomplish these we can use DHCP option sets
-- DHCP options sets:
-    - Once created option sets can not be changed
-    - Can be associated with 0 or more VPCs
-    - Each VPC can have a max of 1 option set associated (it can have 0)
-    - We we change a DHCP option set associated to the VPC, the change is immediate, but any new setting will only affect anything once a DHCP renew occurs
-    - What we can configure in an option set:
-        - DNS server (Route 53 resolver) what we can use in the VPC
-        - NTP server
+---
 
-## VPC Router Deep Dive
+## 2) VPC의 DHCP
 
-- Is at the core of any network which involves AWS
-- Is a virtual router in a VPC
-- It is HA across al AZs in a region, no management overhead is required
-- It is scalable, no management overhead required
-- VPC routes routes traffic between subnets in a VPC
-- Routes traffic from external network into the and vice-versa
-- VPC router has an interface in every subnet in a VPC: `subnet+1` address (Default Gateway), the first IP address in each subnet after the network address itself
-- We control how the VPC routes traffic using Route Tables
+* **DHCP**: 네트워크 설정을 자동 구성(IP, 서브넷 마스크, 기본 게이트웨이 등)
+* DHCP 탐색은 L2 브로드캐스트로 시작(일반 개념)
+* VPC에서 DHCP는 **DNS 서버 설정**도 제공
+* VPC DNS를 지정할 때:
 
-## VPC Route Tables
+  * 직접 DNS 서버 IP를 주거나
+  * `AmazonProvidedDNS`(VPC 기본 제공 DNS) 사용 가능
+* **DHCP Option Set**:
 
-- Every VPC is created with a main Route Table (RT), which is the default for every VPC
-- Custom route tables can be created for each subnet
-- Subnets can be associated with only one RT which can be the main one or custom
-- If we disassociate a custom RT form a subnet, the main RT will be attached to it
-- Main RT should not be changed, custom RT should be used for any routing changes
-- RT have routes, routes have an order, the most specific route wins
-- Edge Association: a RT tables is associated with network gateway
-- All RTs have at least one route: the local route which matches the VPC cidr range. These routes are un-editable
+  * 생성 후 **수정 불가**
+  * 0개 이상의 VPC에 연결 가능
+  * VPC는 최대 **1개** Option Set만 연결 가능(0도 가능)
+  * 변경(연결 전환)은 즉시 적용되지만, 인스턴스는 보통 **DHCP renew 이후** 새 값 반영
+  * 설정 가능한 대표 항목: DNS 서버, NTP 서버(등)
 
-## NACL - Network Access Control Lists
+**시험 함정**
 
-- A NACL can be considered to be a traditional firewall in an AWS VPC
-- NACLs are associated with subnets, every subnet has a NACL associated to it
-- Connection inside a subnet are not affected by NACLs
-- NACls can be considered stateless firewalls, so we can talk about the following type of rules:
-    - Inbound rules: affect data coming into the subnet
-    - Outbound rules: affects data leaving from the subnet
-- Rules can explicitly **ALLOW** and explicitly **DENY** traffic
-- Rules are processed in order:
-    1. A NACL determines if a the inbound or outbound rules apply
-    2. It starts from the lower rule number, evaluates traffic against each rule until is a match (based on IP range, port, protocol)
-    3. Traffic is allowed/denied based on the rule
-- Last rule is an implicit deny in every NACL, if no rule before that applies, traffic will be denied
-- Default NACL: when a VPC is created, a default NACL is attached to it. The default NACL is allowing all traffic
-- Custom NACLs: 
-    - We can create them and attach them to subnets
-    - Each NACL has a default rule that denies all traffic. This has the lowest priority
-- NACLs can be associated to many different subnet, however each subnet can have only one NACL associated to it at any time
-- NACL are not aware af any logical resources within a VPC, they are aware of IPs, CIDRs and protocols
+* “Option Set은 변경 가능” → 오답.
+* “즉시 모든 인스턴스에 반영” → 보통 오답(갱신 타이밍 이슈).
 
-## SG - Security Groups
+---
 
-- Security Groups are stateful firewalls, meaning they detect response traffic to a request and they automatically allow that traffic
-- SGs do not have explicit **DENY** rules, they can be used to block bad actors (use NACLs for this)
-- SGs support IP/CIDR rules and also allow to reference logical resources
-- SGs are attached to Elastic Network Interfaces (ENI), when we attach a SG to an EC2, the SG will be attached to the primary ENI
-- SGs are capable to reference logical resources, ex. other security groups or self referencing
+## 3) VPC Router(암묵적 라우터)
 
-## AWS Local Zones
+* VPC 내 라우팅의 핵심(가상 라우터)
+* **고가용성/확장성**: 리전 내 AZ 전반에 걸쳐 동작(관리 불필요)
+* 서브넷 간 라우팅 및 외부 네트워크 연동(IGW/VGW/TGW 등) 트래픽 처리
+* 각 서브넷의 기본 게이트웨이는 통상 **서브넷 CIDR의 +1 주소**(예: 10.0.1.0/24이면 10.0.1.1)
 
-- Parent Region: regular AWS region
-- Local Zones are attached to parent regions and they operate in the same geographical region
-- Local Zone naming: `us-east-las-1` - < parent region > - < Local Zone identifier (international city code) >. Examples: `us-west-2-lax-1a`, `us-west-2-lax-1b`
-- We can have multiple Local Zones in the same city
-- Local Zones operate as their own independent points, they have their own independent connection to the internet
-- Generally, they support Direct Connect
-- A VPC in a parent region can be extended with subnets from a Local Zone. In these subnets we create our resources as normal
-- These resources will benefit from super low latencies (in case we want to access them from a business premises nearby)
-- Some things within a Local Zone will still utilize the parent region: for example Local Zones will have private networking with the parent region, however if we create backups for an EBS in the Local Zone, this will utilize the S3 from the parent region
-- Local Zones can be considered as one additional AZ (but near our location => lower latency), they don't have builtin AZ
-- Not all AWS products support Local Zones. From the ones which do support, many of them are opt-in an also many of them have limitations
-- Local Zones should be used when we need the highest performance
+---
 
-## Advanced VPC Routing
+## 4) VPC Route Table
 
-- **Subnets are associated with 1 route table (RT) only, no more noe less!**
-- This route table is either the main route table from the VPC or a custom route table
-- In case of a custom route table association with a subnet, the main route table is disassociated. In case the custom RT is removed, the main RT is associated again with the subnet
-- RT can associated with an internet gateway (IGW) or virtual private gateway (VGW)
-- IPv4/6 are handled separately within a RT
-- Routes send traffic based on a destination to a target
-- Route tables have a maximum of 50 static routes and 100 dynamic routes
-- When a traffic arrives to an interface (IGW, VGW), it is matched to the relevant route table
-- All routes from a route table are evaluated - highest-priority matching is used
-- Route tables can contain 2 types of routes:
-    - Static routes: added manually by us
-    - Propagated routes: added when enabled by us on the VPC or on any individual RT
-- Evaluation rule for the routes: 
-    1. Longest prefix wins, example /32 wins over /24, /16 or /0. More specific routes always win!
-    2. Static routes take priority over propagated routes
-    3. For any routes learned by propagation:
-        1. DX
-        2. VPN Static
-        3. VPN BGP
-        4. AS_PATH (BPG term used to represent the path between two ASNs; it is the distance within two different autonomous systems): routes with a shorter AS_PATH would win over the longer AS_PATH ones
+* 모든 VPC에는 **Main Route Table**이 존재(기본)
+* 필요 시 **Custom Route Table** 생성하여 서브넷별로 연결
+* 서브넷은 **오직 1개의 Route Table**에만 연결 가능
+* Custom RT를 해제하면 해당 서브넷은 다시 Main RT를 사용
+* 라우트는 “가장 구체적인 경로(최장 프리픽스)”가 승리
+* 모든 RT에는 편집 불가한 **local route(VPC CIDR)**가 존재
 
-## Ingress Routing
+**시험 관점 팁**
 
-- All outgoing traffic is routed to a security appliances
-- The security appliance is sitting in the public subnet which has a RT assigned to it. This RT sends all unmatched traffic out through the IGW and anything for the corporate network through the VGW
-- Ingress routing allows to assign route tables to gateways (Gateway route tables). **Gateway route tables** can be attached to internet gateways or virtual gateways and can be used to take action on inbound traffic (route to a security instance for assessment)
-![Ingress Routing](images/AdvancedRouting5.png)
+* “Main RT는 건드리지 말고 Custom RT 사용”은 베스트 프랙티스지만, 시험 문제는 “가능/불가능”을 묻는 경우가 많으니 **기술적으로 수정은 가능**하다는 점도 함께 기억.
 
-## IPv6 Capability in VPCs
+---
 
-- IPv6 addresses are all publicly routable
-- NAT is not used for IPv6, IPv6 does not need network address translation simply because of the huge number of available IPv6 addresses
-- IPv6 needs to be manually enabled on a VPC. We can either bring our own IP address in a VPC or utilize an AWS provided range
-- In case of AWS provided IPv6 addresses, AWS will allocate an uniq /56 range to the VPC. This range will be entirely uniq and all addresses will be publicly routable
-- If we chose to allocate an IP range for a VPC, AWS will use a hex pair to uniquely allocate IP addresses to the subnets
-- Routing is handled separately for the IPv6 addresses, we will have IPv4 routes and IPv6 routes
-- Egress only internet gateway: similar to NAT gateway, allows outbound traffic denying inbound traffic in case of IPv6 addressing. NAT gateways or instances do not support IPv6!
-- Only one internet gateway can be associated with a VPC, but we can have both internet gateway and egress only internet gateway associated to the same VPC. They are 2 different things
-![IPv6 Architecture](images/IPv6EOIGW.png)
-- IPv6 can be set up while creating a VPC/subnet or we can migrate an existing VPC to IPv6
-- We can enable IPv6 on specific subnets only
-- We can point IPv6 traffic to internet gateway and egress only internet gateways as well
-- Not every service in AWS supports IPv6!
+## 5) NACL (Network ACL)
 
-## Advanced VPC Structure - How many AZs for HA?
+* 서브넷 단위에 붙는 전통적 방화벽에 가까움
+* **Stateless(비상태)**: Inbound/Outbound를 각각 따로 허용해야 함
+* **ALLOW / DENY** 모두 가능
+* 룰은 번호가 낮은 것부터 평가, 매칭되면 종료
+* 마지막은 항상 **Implicit Deny**
+* **Default NACL**: 기본적으로 “모든 트래픽 허용”으로 구성
+* **Custom NACL**: 기본 룰이 “모두 거부”로 시작(명시적으로 허용 추가 필요)
+* 하나의 NACL은 여러 서브넷에 연결 가능하지만, 서브넷은 동시에 1개 NACL만 연결 가능
+* NACL은 SG처럼 “리소스 논리 참조”가 아니라 **CIDR/포트/프로토콜** 기준
 
-- The number of AZ required for HA:
-    - Buffer AZs: number of AZ-failures tolerated (usually 1 for exam questions)
-    - Nominal AZs: the number of AZs we can use for normal operations: the number fo AZs available in a region - Buffer AZs (example: 6 AZs available, failure tolerated is 1 AZ => 6 - 1 = 5)
-- Sometimes this calculation can influence which region we can use, since number of AZs can differ per region
-- Nominal instances: the number instances required for the application for the business load
-- Most efficient HA in with optimal costs: Nominal Instances / Nominal AZs => optimal number of instances per AZ
+**시험 함정**
 
-## Advanced VPC Structure - Subnets and Tiers
+* Stateless라서 “응답 트래픽 자동 허용”은 오답.
 
-- Public subnets can be configured to not give public IP addresses to all instances by default. We can explicitly allocate public IP addresses to some resources
-- If no public IP is addressed to a resource in a public subnet, it wont be accessible from the outside
-- Security groups: we can restrict inbound traffic by allowing traffic from only selected instances
-- How many subnets does an app need:
-    - We don't need public and private subnets for addressing and security. This can be configured within one subnet. Exception to this: filter traffic using a NACL
-    - We need different subnets for different routing
-    - Internet-facing load balancers can communicates with private instances. Internet facing load balancer needs to run in a public subnet
-    - Number of subnets needed: number of subnets needed for the APP * AZs
-    - NAT Gateway: we cannot have the NAT Gateway in the same subnet in which we would want the resources to also use it. Reason: we cannot have 2 default routes in the Route Table
+---
+
+## 6) Security Group (SG)
+
+* ENI(Elastic Network Interface)에 붙는 방화벽
+* **Stateful(상태 유지)**: 요청에 대한 응답 트래픽은 자동 허용
+* **DENY 규칙이 없음**(허용만 가능)
+* CIDR뿐 아니라 **다른 SG 참조** 같은 논리 참조 가능
+* EC2에 SG를 붙이면 실제로는 EC2의 **Primary ENI**에 적용되는 형태
+
+**시험 함정**
+
+* “SG로 DENY를 만든다” → 오답(NACL/WAF 등으로 처리).
+
+---
+
+## 7) AWS Local Zones
+
+* **Parent Region**에 “확장”된 형태의 로컬 인프라
+* 이름 예시: `us-west-2-lax-1a` (리전 + 도시코드 + 식별자)
+* 같은 도시에 여러 Local Zone 존재 가능
+* Local Zone은 **자체 인터넷 연결**을 가질 수 있음
+* VPC를 Local Zone 서브넷으로 확장하여 리소스를 배치(초저지연 목적)
+* 일부 기능은 Parent Region을 사용(예: 백업이 S3(Parent Region)로 가는 형태 등)
+* 모든 서비스가 Local Zones 지원/제한사항 존재(옵트인 포함)
+
+---
+
+## 8) Advanced VPC Routing 핵심 규칙
+
+* 서브넷은 RT를 1개만 가짐(절대 2개 동시 불가)
+* IGW/VGW 등 “게이트웨이에서 들어오는 트래픽”도 **해당 게이트웨이에 매칭된 RT**로 처리되는 개념이 등장(특히 Ingress Routing)
+* IPv4/IPv6 라우팅은 RT 내에서 **별도로** 다룸
+* Static(수동)과 Propagated(전파) 라우트가 있으며, 우선순위는 보통:
+
+  1. 최장 프리픽스
+  2. Static이 Propagated보다 우선
+  3. 전파 경로 간 우선순위는 시나리오에 따라(예: DX/VPN/BGP/AS_PATH 등)
+
+> “RT 최대 라우트 수” 같은 수치성 제한은 시험에서 가끔 나오는데, 출제 형태가 바뀌기 쉬워서 **문제에서 수치를 강하게 요구할 때만** 근거로 쓰는 편이 안전합니다.
+
+---
+
+## 9) Ingress Routing (Gateway Route Tables)
+
+* 목적: “외부에서 들어오는 트래픽”을 **보안 어플라이언스(방화벽/검사 인스턴스)**로 우회시켜 검사
+* **Gateway Route Table**: IGW 또는 VGW(문맥에 따라) 같은 게이트웨이에 연결되어, 인바운드 트래픽을 특정 타깃(예: 방화벽 인스턴스)으로 라우팅 가능
+
+**시험 함정**
+
+* “인바운드 트래픽은 RT로 제어 못한다”는 식의 단정은 오답이 될 수 있음(ingress routing 시나리오 존재).
+
+---
+
+## 10) VPC의 IPv6
+
+* IPv6는 **기본적으로 모두 퍼블릭 라우터블**(사설/공인 구분 개념이 IPv4와 다름)
+* IPv6는 NAT를 쓰지 않는 것이 일반적이며, AWS에서도 **NAT Gateway/Instance는 IPv6를 지원하지 않음**
+* VPC IPv6는 수동 활성화
+
+  * AWS 제공 IPv6 범위를 받으면 VPC에 보통 **/56** 할당, 서브넷에 /64 배분 형태
+* **Egress-only Internet Gateway(EIGW)**:
+
+  * IPv6에서 “아웃바운드만 허용, 인바운드 차단”을 위한 구성(IPv4의 NAT GW와 비슷한 목적)
+* 한 VPC에는 IGW 1개만 가능하지만, **IGW와 EIGW는 동시에** 연결 가능(서로 다른 리소스)
+
+---
+
+## 11) HA 관점: AZ 수/서브넷 수 사고방식
+
+* HA를 위해 “몇 AZ를 쓸 것인가”는 요구사항(장애 허용 수)과 리전의 AZ 개수에 따라 달라질 수 있음
+* 서브넷 수는 보통:
+
+  * “티어(예: 퍼블릭/프라이빗/데이터)” × “AZ 수”
+* 인터넷-facing ALB는 퍼블릭 서브넷에 있어야 하지만, 타깃(EC2 등)은 프라이빗 서브넷이어도 됨
+
+**작성 내용 중 주의할 문장(정확도 보정)**
+
+* “퍼블릭/프라이빗 서브넷이 주소/보안 때문에 꼭 필요한 건 아니다”는 취지는 이해되지만, 실무/시험 모두에서 **라우팅 분리(IGW vs NAT/EIGW), 인바운드 노출 분리, 계층화** 때문에 퍼블릭/프라이빗 분리는 매우 표준적입니다. 시험 문제는 보통 “라우팅 요구사항”으로 퍼블릭/프라이빗을 강제합니다.
