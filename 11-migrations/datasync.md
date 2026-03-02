@@ -1,24 +1,45 @@
-# AWS DataSync
+## AWS DataSync
 
-- It is a data transfer service which allows data to be transferred into or out of AWS
-- Can be used for workflows such as migrations, data processing transfers, archival, cost effective storage, DR/BC
-- Each agent can handle 10 Gbps transfer speed, each job can handle 15 million files
-- It also handles the transfer of metadata (permissions, timestamps)
-- It provides built in data validation
+### 1) 서비스 개요
 
-## Key Features
+* **AWS DataSync**는 온프레미스 ↔ AWS, 또는 AWS 서비스 간에 데이터를 **빠르고 안전하게** 이동/동기화하는 **관리형 데이터 전송 서비스**입니다.
+* 대표 활용: **마이그레이션**, **데이터 파이프라인 전송**, **아카이빙(저비용 스토리지로 이동)**, **DR/BC(재해복구/업무연속성)**.
 
-- Scalable: 10 Gbps per agent (~100 TB of data per day)
-- Bandwidth Limiters: used to avoid link saturation
-- Incremental and scheduled transfer options
-- Compressions and encryption
-- Automatic recovery from transit errors
-- Service integration: S3, EFS, FSx, service-to-service transfer
-- Pay as you use service: per GB of data transferred
-- The DataSync agent runs on a virtualization platform such as VMWare
+---
 
-## DataSync Components
+### 2) 핵심 특성(시험 포인트)
 
-- Task: a job within DataSync, defines what is being synced, how quickly, from where and to where
-- Agent: software used to read or write to on-premises data stores using NFS or SMB
-- Location: every task has two locations from and to, examples: Network File System (NFS), Server Message Block (SMB), Amazon EFS, Amazon FSx and Amazon S3
+* **대용량/고성능 전송**: 에이전트(Agent) 1개당 **최대 10Gbps** 수준 전송 성능을 목표로 설계.
+* **파일 수 확장성**: 태스크(Task) 1개가 **최대 1,500만 파일**까지 처리 가능.
+* **메타데이터 보존**: 파일 **권한(퍼미션), 타임스탬프** 등 메타데이터를 함께 복사 가능.
+* **내장 데이터 검증**: 전송 후 **무결성 검증**(built-in validation)을 제공.
+* **증분/스케줄 전송**: 변경분만 옮기는 **증분 동기화**, **예약 실행** 지원.
+* **대역폭 제어**: **Bandwidth Limiter**로 회선 포화 방지(업무시간 트래픽 보호).
+* **압축/암호화**: 전송 효율 및 보안 강화 옵션.
+* **전송 오류 복구**: 전송 중 오류 발생 시 자동 재시도/복구 메커니즘.
+* **요금**: 일반적으로 **전송한 데이터량(GB) 기준 과금**(Pay-as-you-go).
+* **에이전트 형태**: 온프레미스에서 보통 **가상화 환경(VMware 등)**에 DataSync **Agent 소프트웨어**를 설치해 사용.
+
+---
+
+### 3) 구성 요소(Components)
+
+* **Task(태스크)**
+
+  * DataSync의 “작업 단위(잡)”
+  * 무엇을(데이터), 어디서→어디로, 얼마나 빠르게/어떤 옵션으로(필터, 검증, 대역폭 제한, 스케줄 등)를 정의
+* **Agent(에이전트)**
+
+  * 온프레미스 스토리지에 접근해 **읽기/쓰기** 수행
+  * 일반적으로 **NFS/SMB** 같은 파일 프로토콜 기반 소스/대상에 연결
+* **Location(로케이션)**
+
+  * 태스크는 항상 **2개의 Location(소스/대상)**을 가짐
+  * 예: **NFS, SMB, Amazon S3, Amazon EFS, Amazon FSx** 등
+
+---
+
+### 4) 시험에서 자주 나오는 구분 포인트
+
+* “**대규모 파일 기반 데이터 이동/동기화**” + “**메타데이터 보존**” + “**검증/스케줄/증분**”이 함께 나오면 DataSync가 1순위 후보가 되는 경우가 많습니다.
+* 반대로 “**온라인 마이그레이션/DB 복제/CDC**” 같은 맥락이면 DataSync가 아니라 다른 서비스(DMS 등)를 먼저 의심하는 식으로 분기합니다.
