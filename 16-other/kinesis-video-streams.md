@@ -1,9 +1,27 @@
-# Kinesis Video Streams
+## Kinesis Video Streams
 
-- Allows us to ingest live video data from producers
-- Producers can be security cameras, smartphones, cars, drones, time-serialised audio, thermal, depth and RADAR data
-- Consumers can access the data frame-by-frame or as needed
-- Kinesis can persist and encrypt data in-transit and at rest
-- We can not access data directly via storage, only via APIs!
-- Data is not stored in its original format. Data is indexed and stored in a structured way
-- Kinesis Video Streams integrates with other AWS services such as Rekognition and Connect
+* **프로듀서(Producer)로부터 실시간 비디오 데이터를 수집(ingest)할 수 있는 서비스**입니다.
+* 프로듀서 예시는 다음과 같습니다.
+
+  * 보안 카메라
+  * 스마트폰
+  * 자동차
+  * 드론
+  * 시계열 오디오 데이터
+  * 열(thermal) 데이터
+  * 깊이(depth) 데이터
+  * RADAR 데이터
+* **컨슈머(Consumer)** 는 데이터를 **프레임 단위(frame-by-frame)** 로 가져오거나, 필요한 시점에 맞춰 조회할 수 있습니다.
+* Kinesis Video Streams는 데이터를 **전송 중(in-transit)** 과 **저장 시(at rest)** 모두 암호화할 수 있습니다.
+* 데이터에 **스토리지 레벨로 직접 접근할 수 없고, 반드시 API를 통해서만 접근**할 수 있습니다.
+* 데이터는 **원본 형식 그대로 저장되는 것이 아니라**, 인덱싱되어 **구조화된 형태로 저장**됩니다.
+* Kinesis Video Streams는 다음과 같은 다른 AWS 서비스와 통합됩니다.
+
+  * **Amazon Rekognition**
+  * **Amazon Connect**
+
+### 시험 포인트
+
+* **실시간 비디오 스트리밍 수집**이 핵심입니다.
+* **직접 스토리지 접근 불가, API 접근만 가능**하다는 점이 자주 포인트가 됩니다.
+* **영상 분석 서비스(Rekognition)와 연계**해서 사용하는 시나리오를 기억해두면 좋습니다.
