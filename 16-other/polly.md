@@ -1,13 +1,48 @@
-# Amazon Polly
+## Amazon Polly
 
-- Converts text in "life-like" speech
-- The products takes text in specific languages and outputs speech in that specific language. Polly does not do translation!
-- There 2 modes that Polly operates in:
-    - Standard TTS:
-        - Uses a concatenative architecture
-        - Takes phonemes (smallest units of sound) to build patterns of speech
-    - Neural TTS:
-        - Takes phonemes, generate spectograms, it puts those spectograms through a vocoder form which gets the output audio
-        - Much advanced way of generating human-like speech
-- Output formats: MP3, Ogg Vorbis, PCM
-- Polly is capable of using the Speech Synthesis Markup Language (SSML). This is a way we can provide additional control over how Polly generates speech. We can get Polly to emphasis certain part of the text or do certain pronunciation (whispering, Newscaster speaking style)
+* **Amazon Polly**는 텍스트를 **사람처럼 자연스러운 음성**으로 변환하는 서비스입니다.
+* 입력한 텍스트를 **해당 언어의 음성**으로 변환합니다.
+* **번역 기능은 제공하지 않습니다.** 즉, 영어 텍스트를 한국어로 번역해 읽어주는 서비스가 아니라, **주어진 언어의 텍스트를 같은 언어의 음성으로 변환**하는 서비스입니다.
+
+### Polly의 2가지 동작 방식
+
+#### 1. Standard TTS
+
+* **결합형(Concatenative) 아키텍처**를 사용합니다.
+* **음소(phoneme, 소리의 최소 단위)** 를 기반으로 음성 패턴을 조합해 생성합니다.
+
+#### 2. Neural TTS
+
+* 음소를 입력받아 **스펙트로그램(spectrogram)** 을 생성한 뒤,
+* 이를 **보코더(vocoder)** 를 통해 실제 오디오로 변환합니다.
+* Standard TTS보다 **더 자연스럽고 인간에 가까운 음성**을 생성할 수 있습니다.
+
+### 출력 형식
+
+Polly는 다음 형식으로 음성을 출력할 수 있습니다.
+
+* **MP3**
+* **Ogg Vorbis**
+* **PCM**
+
+### SSML 지원
+
+* Polly는 **SSML(Speech Synthesis Markup Language)** 을 지원합니다.
+* SSML을 사용하면 음성 생성 방식을 더 세밀하게 제어할 수 있습니다.
+* 예를 들어:
+
+  * 특정 단어 또는 문장 **강조**
+  * **발음 제어**
+  * **속삭이는 말투**
+  * **뉴스캐스터 스타일 음성**
+
+### 시험 관점 핵심 포인트
+
+* **텍스트를 음성으로 변환하는 서비스**
+* **번역 서비스가 아님**
+* **Standard TTS와 Neural TTS**를 지원
+* **SSML로 발음, 강조, 스타일 등을 제어 가능**
+
+용어:
+
+* **Phoneme(음소)**: 소리의 최소 단위
