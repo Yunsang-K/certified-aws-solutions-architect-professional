@@ -1,111 +1,166 @@
-# DR/BC Architecture
+# DR/BC 아키텍처
 
-- Effective DR/BC costs money all of the time
-- We need some type of extra resources which will increase costs
-- Executing disaster recover/business continuity process takes time. How long it takes depends on the type of DR/BC in usage
-- DR/BC is trade-off between the time and costs
+* 효과적인 **DR(Disaster Recovery, 재해 복구)** / **BC(Business Continuity, 비즈니스 연속성)** 는 평상시에도 비용이 듭니다.
+* 추가 리소스를 준비해 두어야 하므로 비용이 증가합니다.
+* 재해 복구 / 업무 연속성 절차를 실행하는 데에는 시간이 걸립니다. 소요 시간은 사용하는 DR/BC 방식에 따라 달라집니다.
+* 즉, **DR/BC는 비용과 복구 시간 사이의 트레이드오프**입니다.
 
-## Types of Disaster Recovery
+## 재해 복구 방식의 종류
 
-- **Backup and Restore**:
-    - Data is constantly backup up at the primary site
-    - The only costs are backup media and management, no ongoing space infrastructure costs
-    - Has little or no upfront costs, but implies a significant time for recovery
-    - Expected recovery time is counted in hours
-- **Pilot Light**:
-    - Primary site is running at full
-    - Pilot Light implies running a secondary environment only having the absolute minimum services running
-    - In the event of a disaster the shutdown services can be spined up, no costs are expected to be inquired if there is no need for DR
-    - Expected recovery time is a few 10s of minutes
-- **Warm Standby**:
-    - Primary site is running at full, everything is replicated on the backup site at a smaller scale
-    - Ready to be increased in size when failover is required
-    - It is faster than pilot light approach and cheaper than active/active approach
-    - Expected recovery time is a few minutes
-- **Active/Active (Multi-site):**
-    - Primary site is entirely replicated on a secondary site
-    - Data is constantly replicated from the primary site to the backup
-    - Costs are generally 200%
-    - There is no concept of recovery time
-    - Additional benefits:
-        - Load balancing across environments
-        - Improved HA and performance
-- Summary:
-    - Backups: cheap and slow
-    - Pilot Light: fairly cheap but faster
-    - Warm Standby: costly, but quick to recover
-    - Active/Active: expensive, 0 recovery time
+* **Backup and Restore**
 
-## DR Architecture - Storage
+  * 기본 사이트의 데이터를 지속적으로 백업합니다.
+  * 비용은 주로 백업 저장 매체와 관리 비용 정도이며, 상시 운영되는 대기 인프라 비용은 없습니다.
+  * 초기 비용은 거의 없거나 매우 낮지만, 복구에는 상당한 시간이 걸립니다.
+  * 일반적으로 **복구 시간은 몇 시간 단위**입니다.
 
-- Instance Store volumes:
-    - Most high risk form of storage available
-    - If the host fails, the instance store volumes will also fail
-    - Should be viewed as temporary and unreliable storage
-- EBS:
-    - Volumes are created an run in a single AZ (failure of AZ means failure of EBS volumes)
-    - Snapshots of EBS are stored in S3, will increase reliability
-- S3: 
-    - Data is replicated across multiple AZs
-    - One-Zone: not regionally resilient
-- EFS:
-    - EFS file systems are replicated across multiple AZs
-    - They are by default regionally resilient - failure of a region means failure of EFS volumes
-- DR Architecture - Storage:
-    ![DR Architecture - Storage](images/DRArchitectureStorage.png)
+* **Pilot Light**
 
-## DR Architecture - Compute
+  * 기본 사이트는 정상 규모로 운영됩니다.
+  * 보조 사이트에는 최소한의 핵심 서비스만 실행합니다.
+  * 재해 발생 시 중지되어 있던 서비스들을 기동하여 전체 환경으로 확장합니다.
+  * 평상시 비용은 상대적으로 낮습니다.
+  * 일반적으로 **복구 시간은 수십 분 정도**입니다.
 
-- EC2:
-    - If the host fails, EC2 instances fails as well
-    - An EC2 instance by itself is not resilient in any way
-    - If the failure is limited to one host, the instance can move to another host in the AZ. The EBS volume can be presented to the new instance
-    - Auto Scaling Group: can be placed in multiple AZs, if the instance fails in one AZ, the ASG's role is to recreate them in another
-- ECS:
-    - Can run it 2 modes: EC2 and Fargate
-    - EC2 mode: DR architecture is similar as above
-    - Fargate mode: containers are running on a cluster host managed by AWS being injected in VPCs
-    - Fargate can provide automatic HA by running things in different AZs
-- Lambda:
-    - By default runs in public mode
-    - In VPC mode (private) Lambdas are injected in VPCs. If an AZ fails, Lambda can be automatically injected in another subnet in a different AZ
-    - It will take the failure if a region in order for Lambda to be impacted
-- DR Architecture - Compute:
-    ![DR Architecture - Compute](images/DRArchitectureCompute.png)
+* **Warm Standby**
 
-## DR Architecture - Databases
+  * 기본 사이트는 정상 규모로 운영되고, 보조 사이트에는 더 작은 규모로 전체 환경이 복제되어 있습니다.
+  * 장애 조치가 필요할 때 빠르게 확장할 수 있습니다.
+  * Pilot Light보다 빠르고, Active/Active보다는 저렴합니다.
+  * 일반적으로 **복구 시간은 몇 분 정도**입니다.
 
-- Running databases on EC2 should be done in certain cases only!
-- DynamoDB:
-    - Data is replicated between multiple nodes in different AZs
-    - Failure can occur only if the entire region fails
-- RDS:
-    - Requires creation of a subnet group which specifies which subnet can be used in a VPC for a DB
-    - Normal RDS (not Aurora) involves a single instance or primary and standby instance running in different AZs
-    - Data is stored in local storage for each instance, data is replicated asynchronously to the standby
-    - If the primary instance fails, automatic fallback is done to the standby
-    - In case of Aurora, we can have one or more replicas in each AZs
-    - Aurora uses a cluster storage architecture, storage is shared between running DB instances
-    - Aurora can resist failures up to the entire region failure (not using Aurora Global)
-- Global Databases:
-    - DynamoDB Global Table: multi master replication between regional replicas.
-    - Aurora Global Databases: read-write cluster in one region, secondary read cluster in other regions. Replication happens at the storage layer, no additional load placed on the DB
-    - Cross Region Read Replicas for RDS: asynchronous replication but not done on the storage layer
-- DR Architecture - Databases:
-    ![DR Architecture - Databases](images/DRArchitectureDatabases.png)
+* **Active/Active (Multi-site)**
 
-## DR Architecture - Networking
+  * 기본 사이트 전체가 보조 사이트에도 완전히 복제되어 있습니다.
+  * 데이터는 기본 사이트에서 보조 사이트로 지속적으로 복제됩니다.
+  * 비용은 일반적으로 **약 200% 수준**입니다.
+  * 사실상 **복구 시간 개념이 거의 없습니다**.
+  * 추가 이점
 
-- Networking at local level:
-    - VPC are regionally resilient
-    - Certain gateway objects like VPC Router and IGW are also regionally resilient
-    - Subnets are tied to AZ they are located in, if the AZ fails, the subnet fails as well
-    - LB: regional services, nodes are deployed into each AZ we select
-    - By using a LB we can route traffic to AZs which are healthy
-- Interface endpoint:
-    - Are tied to an AZ
-    - Multiple interface endpoints can be deployed into different AZs
-- DR Architecture - Networking:
-    ![DR Architecture - Networking](images/DRArchitectureNetworking.png)
-- Global Networking:
-    - Route53 can route globally to different regions (failover routing)
+    * 환경 간 로드 밸런싱 가능
+    * 고가용성과 성능 향상
+
+* **요약**
+
+  * Backup and Restore: 저렴하지만 느림
+  * Pilot Light: 비교적 저렴하고 더 빠름
+  * Warm Standby: 비용은 더 들지만 빠르게 복구 가능
+  * Active/Active: 매우 비싸지만 복구 시간 거의 없음
+
+---
+
+## DR 아키텍처 - 스토리지
+
+* **Instance Store 볼륨**
+
+  * 가장 위험성이 높은 스토리지 형태입니다.
+  * 호스트에 장애가 발생하면 Instance Store도 함께 손실됩니다.
+  * 임시적이고 신뢰할 수 없는 스토리지로 봐야 합니다.
+
+* **EBS**
+
+  * 볼륨은 단일 AZ 내에서 생성되고 동작합니다.
+  * 따라서 해당 AZ에 장애가 나면 EBS 볼륨도 영향을 받습니다.
+  * EBS 스냅샷은 S3에 저장되므로, 이를 통해 신뢰성을 높일 수 있습니다.
+
+* **S3**
+
+  * 데이터는 여러 AZ에 걸쳐 복제됩니다.
+  * 단, **S3 One Zone**은 리전 수준 복원력을 제공하지 않습니다.
+
+* **EFS**
+
+  * EFS 파일 시스템은 여러 AZ에 걸쳐 복제됩니다.
+  * 기본적으로 리전 내 복원력을 가지지만, **리전 전체 장애**에는 영향을 받습니다.
+
+---
+
+## DR 아키텍처 - 컴퓨팅
+
+* **EC2**
+
+  * 호스트에 장애가 발생하면 EC2 인스턴스도 영향을 받습니다.
+  * EC2 인스턴스 단독으로는 별도의 복원력을 갖지 않습니다.
+  * 장애가 특정 호스트에만 국한된 경우, 인스턴스는 같은 AZ 내 다른 호스트로 이동할 수 있습니다. 이때 EBS 볼륨을 새 인스턴스에 다시 연결할 수 있습니다.
+  * **Auto Scaling Group**
+
+    * 여러 AZ에 배치할 수 있습니다.
+    * 한 AZ의 인스턴스에 장애가 발생하면 다른 AZ에서 다시 생성할 수 있습니다.
+
+* **ECS**
+
+  * 두 가지 방식으로 실행할 수 있습니다. **EC2 모드**와 **Fargate 모드**입니다.
+  * EC2 모드에서는 DR 아키텍처가 EC2와 유사합니다.
+  * Fargate 모드에서는 AWS가 관리하는 클러스터 호스트에서 컨테이너가 실행되며 VPC 내부에서 동작합니다.
+  * Fargate는 여러 AZ에 태스크를 분산 실행하여 자동 HA를 제공할 수 있습니다.
+
+* **Lambda**
+
+  * 기본적으로 퍼블릭 서비스 형태로 동작합니다.
+  * VPC 모드에서는 Lambda가 VPC 내부 서브넷에 연결됩니다.
+  * 특정 AZ에 장애가 발생하면 다른 AZ의 서브넷으로 자동 배치될 수 있습니다.
+  * 일반적으로 **리전 전체 장애가 발생해야 Lambda가 영향을 받습니다**.
+
+---
+
+## DR 아키텍처 - 데이터베이스
+
+* 데이터베이스를 EC2 위에서 직접 운영하는 것은 특정한 경우에만 고려해야 합니다.
+
+* **DynamoDB**
+
+  * 데이터는 서로 다른 AZ의 여러 노드에 복제됩니다.
+  * 일반적으로 **리전 전체 장애가 발생해야 서비스에 큰 영향**이 생깁니다.
+
+* **RDS**
+
+  * VPC에서 사용할 DB 서브넷을 지정하는 **DB Subnet Group**이 필요합니다.
+  * 일반적인 RDS(비 Aurora)는 단일 인스턴스 또는 서로 다른 AZ에 위치한 Primary / Standby 인스턴스로 구성됩니다.
+  * 데이터는 각 인스턴스의 스토리지에 저장되며, Standby로 복제됩니다.
+  * Primary 인스턴스 장애 시 자동 장애 조치가 이루어집니다.
+  * **Aurora**
+
+    * 각 AZ에 하나 이상의 복제본을 둘 수 있습니다.
+    * Aurora는 클러스터 스토리지 아키텍처를 사용하며, 스토리지를 DB 인스턴스들이 공유합니다.
+    * Aurora Global Database를 사용하지 않는다면, 일반 Aurora도 기본적으로 리전 장애에는 취약합니다.
+
+* **글로벌 데이터베이스**
+
+  * **DynamoDB Global Tables**
+
+    * 여러 리전 간 멀티 마스터 복제를 제공합니다.
+  * **Aurora Global Database**
+
+    * 한 리전에 읽기/쓰기 클러스터를 두고, 다른 리전에 읽기 전용 보조 클러스터를 둡니다.
+    * 복제는 스토리지 계층에서 수행되므로 DB 자체에 추가 부하가 적습니다.
+  * **RDS Cross-Region Read Replica**
+
+    * 비동기 복제를 사용합니다.
+    * Aurora Global Database처럼 스토리지 계층 복제는 아닙니다.
+
+---
+
+## DR 아키텍처 - 네트워킹
+
+### 로컬(리전 내부) 네트워킹
+
+* **VPC**는 리전 수준에서 복원력을 가집니다.
+
+* **VPC Router**, **Internet Gateway** 같은 일부 게이트웨이 구성 요소도 리전 수준 복원력을 가집니다.
+
+* **서브넷**은 특정 AZ에 종속되므로, 해당 AZ가 장애 나면 서브넷도 영향을 받습니다.
+
+* **Load Balancer**
+
+  * 리전 단위 서비스입니다.
+  * 선택한 각 AZ에 노드가 배치됩니다.
+  * 이를 통해 정상적인 AZ로 트래픽을 우회할 수 있습니다.
+
+* **Interface Endpoint**
+
+  * AZ에 종속됩니다.
+  * 따라서 여러 AZ에 Interface Endpoint를 배치해야 가용성을 높일 수 있습니다.
+
+### 글로벌 네트워킹
+
+* **Route 53**은 여러 리전에 걸쳐 글로벌 라우팅이 가능하며, **Failover Routing**을 통해 장애 조치를 지원할 수 있습니다.
