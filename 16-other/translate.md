@@ -1,14 +1,38 @@
 # Amazon Translate
 
-- Is a text translation service based in ML
-- Translates text from native language to other languages one word at a time
-- Translation process has two parts:
-    - Encoder reads the source text => outputs a semantic representation (meaning)
-    - Decoder reads in the meaning => writes to the target language
-- Attention mechanism ensures "meaning" is translated
-- Textract is capable to detect the source text language
-- Use cases:
-    - Multilingual user experience
-    - Translate incoming data (social media/news/communications)
-    - Language-independence for other AWS services: we might have other services such as Comprehend, Transcribe and Polly which operate on information; Transcribe will make this services operate in a language independent way. It can used to analyze data stored in S3, RDS, DDB, etc.
-    - Commonly used for integration with other services/Apps/platforms
+* Amazon Translate는 **기계 학습(ML) 기반의 텍스트 번역 서비스**입니다.
+* 한 언어의 텍스트를 다른 언어로 번역합니다.
+* 번역은 단순히 단어를 하나씩 바꾸는 방식이 아니라, **문장의 의미와 문맥을 이해해 자연스럽게 변환하는 방식**으로 수행됩니다.
+
+## 번역 과정
+
+* 번역 과정은 크게 두 단계로 볼 수 있습니다.
+
+  * **Encoder**가 원문을 읽고 의미를 표현하는 내부 표현으로 변환
+  * **Decoder**가 그 의미를 바탕으로 대상 언어 문장을 생성
+* **Attention 메커니즘**을 통해 문맥과 의미를 더 정확하게 반영하여 번역 품질을 높입니다.
+* Amazon Translate는 **입력 텍스트의 원본 언어를 자동 감지**할 수 있습니다.
+
+## 사용 사례
+
+* **다국어 사용자 경험 제공**
+
+  * 웹사이트, 앱, 채팅, 문서 등을 여러 언어로 제공
+* **유입 데이터 번역**
+
+  * 소셜 미디어, 뉴스, 커뮤니케이션 데이터 등을 번역하여 활용
+* **다른 AWS 서비스와 연계한 언어 독립적 처리**
+
+  * 예를 들어 Comprehend, Transcribe, Polly 같은 서비스와 함께 사용하여 언어 장벽을 줄일 수 있음
+  * S3, RDS, DynamoDB 등에 저장된 데이터를 번역 후 분석 파이프라인에 활용 가능
+* **애플리케이션, 플랫폼, 기타 서비스와의 통합**
+
+  * API 기반으로 쉽게 애플리케이션에 통합 가능
+
+## 시험 포인트 정리
+
+* **텍스트 번역 서비스**
+* **ML/NMT(신경망 기계 번역) 기반**
+* **자동 언어 감지 가능**
+* **다른 AWS AI/ML 서비스와 연계 자주 출제**
+* **글로벌 서비스, 다국어 UX 구현**에 적합
