@@ -1,12 +1,29 @@
 # AWS Proton
 
-- It is:
-    - Automated infrastructure as code provisioning and deployment of serverless and container-based applications:
-        - AWS Proton service is a two-pronged automation framework
-        - We create versioned **service templates** that define standardized infrastructure and deployment tooling for serverless and container-based applications
-        - AWS Proton identifies all existing service instances that are using an outdated template version for us
-        - We can request AWS Proton to upgrade them with one click
-    - Standardized infrastructure:
-        - Platform teams can use AWS Proton and versioned infrastructure as code templates
-    - Deployments integrated with CI/CD:
-        - AWS Proton automatically provisions the resources, configures the CI/CD pipeline, and deploys the code into the defined infrastructure
+* AWS Proton은 다음과 같은 서비스이다.
+
+## 1. 서버리스 및 컨테이너 기반 애플리케이션의 인프라 코드 자동 프로비저닝 및 배포
+
+* AWS Proton은 **두 축으로 구성된 자동화 프레임워크**이다.
+* 먼저, **서비스 템플릿(service templates)** 을 버전 관리 형태로 생성할 수 있다.
+* 이 템플릿에는 서버리스 및 컨테이너 기반 애플리케이션을 위한 **표준화된 인프라 구성**과 **배포 도구 설정**이 정의된다.
+* AWS Proton은 현재 배포되어 있는 서비스 인스턴스 중에서 **구버전 템플릿을 사용 중인 대상**을 자동으로 식별해준다.
+* 이후 필요하면 **원클릭으로 템플릿 업그레이드**를 요청할 수 있다.
+
+## 2. 표준화된 인프라 제공
+
+* 플랫폼 팀은 AWS Proton과 **버전 관리되는 IaC 템플릿**을 사용해서
+  조직 내 애플리케이션에 대해 **일관된 인프라 표준**을 제공할 수 있다.
+
+## 3. CI/CD와 통합된 배포
+
+* AWS Proton은 필요한 리소스를 자동으로 프로비저닝하고,
+* CI/CD 파이프라인을 구성하며,
+* 정의된 인프라 환경에 애플리케이션 코드를 배포한다.
+
+**AWS Proton 핵심**
+
+* 컨테이너/서버리스용 **표준화된 인프라 템플릿** 제공
+* **IaC + CI/CD + 배포 자동화**
+* 템플릿 **버전 관리 및 업그레이드** 지원
+* 주로 **플랫폼 팀이 개발 팀에 표준 환경을 제공**할 때 사용
