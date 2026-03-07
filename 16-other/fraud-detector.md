@@ -1,9 +1,17 @@
 # Amazon Fraud Detector
 
-- Is a fully managed fraud detection service
-- Allows us to look at various historical trends and other related data and identify any potential fraud as it related to certain only activities such as new account creation, payments or guest checkouts
-- We upload some historical data and we have to chose a model type:
-    - Online Fraud: needs little historical data
-    - Transaction Fraud: idean when we have a transactional history for a customer, identifies suspect payments
-    - Account Takeover: used to identify phishing or another social based attack
-- Events are scored, based on which we can create rules/decisions to react to events according to our business activity
+* **Amazon Fraud Detector**는 완전관리형 사기 탐지 서비스입니다.
+* 과거의 다양한 추세 데이터와 관련 데이터를 분석하여, **신규 계정 생성**, **결제**, **게스트 체크아웃** 같은 특정 온라인 활동과 관련된 잠재적 사기 행위를 식별할 수 있습니다.
+* 과거 데이터를 업로드한 뒤, 다음과 같은 **모델 유형**을 선택해야 합니다.
+
+  * **Online Fraud**: 적은 양의 과거 데이터만 있어도 사용할 수 있습니다.
+  * **Transaction Fraud**: 고객의 거래 이력이 있을 때 적합하며, 의심스러운 결제를 식별합니다.
+  * **Account Takeover**: 피싱이나 기타 소셜 엔지니어링 기반 공격으로 인한 계정 탈취를 식별하는 데 사용됩니다.
+* 이벤트는 점수화되며, 이 점수를 기준으로 비즈니스 요구사항에 맞는 **규칙(rule)** 과 **의사결정(decision)** 을 만들어 이벤트에 대응할 수 있습니다.
+
+## 핵심 정리
+
+* 사기 탐지용 **완전관리형 서비스**
+* 과거 데이터 기반으로 **사기 가능성 점수 산정**
+* **신규 계정 생성, 결제, 게스트 체크아웃** 등의 이벤트 탐지 가능
+* 점수 기반으로 **자동 대응 규칙** 설정 가능
