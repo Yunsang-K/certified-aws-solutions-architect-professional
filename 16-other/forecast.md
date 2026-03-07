@@ -1,6 +1,8 @@
 # Amazon Forecast
 
-- Provides forecasting for time series data. For example can be used for predicting retail demand, supply chain, staffing levels, energy requirements, server capacity and web traffic
-- For any type of time-series data where we have a large amount of historical data, Forecast can be used to provide the ability to forecast future trends and events
-- In order to accomplish this forecasting we have to import historical data and other related data. Related data includes extra contextual information (example promotions running when an item was sold)
-- The output of Forecast will be a forecast and forecast explainability. The explainability allows to understand the reasons behind the forecasted data
+* 시계열 데이터 예측을 제공하는 서비스입니다. 예를 들어 소매 수요, 공급망, 인력 배치 수준, 에너지 사용량, 서버 용량, 웹 트래픽 예측에 사용할 수 있습니다.
+* 과거 데이터가 많이 축적된 모든 종류의 시계열 데이터에 대해, 미래 추세와 이벤트를 예측하는 데 사용할 수 있습니다.
+* 이러한 예측을 수행하려면 과거 데이터와 관련 데이터를 가져와야 합니다.
+  관련 데이터에는 예측 정확도를 높이기 위한 추가적인 문맥 정보가 포함됩니다. 예를 들어, 특정 상품이 판매될 당시 진행 중이던 프로모션 정보가 이에 해당합니다.
+* Forecast의 출력 결과는 예측값과 예측 설명 가능성(Forecast Explainability)입니다.
+* 예측 설명 가능성을 통해 왜 해당 예측 결과가 나왔는지 그 이유를 이해할 수 있습니다.
