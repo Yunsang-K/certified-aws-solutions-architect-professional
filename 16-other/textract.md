@@ -1,14 +1,26 @@
 # Amazon Textract
 
-- Is a ML product used to detect and analyse text contained in input documents such as JPEG, PNG, PDF or TIFF
-- The output is extracted text, structure of that text and any analysis that can be performed on that text
-- For most documents the Textract is capable to operate in a synchronous way (real time)
-- For large documents it will operate in asynchronous way
-- It is pay per usage, custom pricing being available for large volume of documents
-- Use cases of Textract:
-    - Detection of text and the relationship between the text, example receipt - dates, items, prices. It also offers metadata about the text: where the ext occurs
-    - Document analysis:
-        - For generic documents might detect names, addresses, birth date, etc.
-        - For receipts: prices, vendors, line items, dates, etc.
-        - Identity documents: abstraction of certain fields to being able to store them in a table of a database
-- It can be integrated with other AWS services
+* Amazon Textract는 JPEG, PNG, PDF, TIFF 같은 입력 문서에 포함된 텍스트를 감지하고 분석하는 데 사용하는 머신러닝 서비스입니다.
+* 출력 결과로는 추출된 텍스트, 텍스트의 구조, 그리고 해당 텍스트에 대해 수행할 수 있는 분석 결과가 제공됩니다.
+* 대부분의 문서에 대해서는 동기식 방식으로 동작할 수 있어 실시간 처리에 적합합니다.
+* 대용량 문서의 경우에는 비동기식 방식으로 동작합니다.
+* 사용량 기반 과금 모델이며, 대량 문서 처리에는 맞춤형 요금이 제공될 수 있습니다.
+
+## Textract 사용 사례
+
+* 텍스트 검출 및 텍스트 간 관계 분석
+
+  * 예를 들어 영수증에서 날짜, 품목, 가격 같은 정보를 추출할 수 있습니다.
+  * 또한 텍스트가 문서 내 어디에 위치하는지에 대한 메타데이터도 제공합니다.
+* 문서 분석
+
+  * 일반 문서에서는 이름, 주소, 생년월일 등의 정보를 감지할 수 있습니다.
+  * 영수증에서는 가격, 판매자, 품목별 내역, 날짜 등을 추출할 수 있습니다.
+  * 신분증 문서에서는 특정 필드를 추출해 데이터베이스 테이블에 저장할 수 있도록 정형화할 수 있습니다.
+* 다른 AWS 서비스와 통합하여 사용할 수 있습니다.
+
+## 시험 포인트
+
+* **OCR + 문서 구조 분석**이 핵심입니다. 단순 텍스트 추출만이 아니라 **양식, 영수증, 신분증 같은 구조화된 문서 처리**에 강합니다.
+* 소규모 문서는 **동기식**, 대규모 문서는 **비동기식** 처리라는 점을 구분해야 합니다.
+* 시험에서는 보통 **스캔 문서에서 텍스트/필드/테이블을 추출해야 하는 상황**에서 Textract가 정답 후보로 자주 나옵니다.
