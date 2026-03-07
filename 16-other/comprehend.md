@@ -1,12 +1,21 @@
-# Amazon Comprehend
+## Amazon Comprehend
 
-- It is a natural language processing (NLP) system available in AWS
-- We input a document and Comprehend will develop insights by recognizing the entities, key phrases, language, sentiments and other common elements of the document
-- How the system works:
-    - Input = Document
-    - Output = Entities, phrases, language, PII, sentiments
-- Comprehend is ML services and it is based on pre-trained and custom models
-- Product is capable of doing real-time analysis for small workloads and asynchronous analysis for large workloads in form of jobs
-- The text analysis type can be:
-    - Built-in: using AWS built-in models
-    - Custom: using custom models from endpoints we have created
+* AWS에서 제공하는 자연어 처리(NLP) 서비스이다.
+* 문서를 입력하면 Comprehend가 해당 문서에서 엔터티, 핵심 구문, 언어, 감정, 그리고 기타 공통 요소를 식별하여 인사이트를 도출한다.
+* 시스템 동작 방식:
+
+  * 입력 = 문서
+  * 출력 = 엔터티, 핵심 구문, 언어, PII(개인 식별 정보), 감정 분석 결과
+* Comprehend는 머신러닝 서비스이며, 사전 학습된 모델과 사용자 정의 모델을 기반으로 동작한다.
+* 소규모 워크로드에 대해서는 실시간 분석을 수행할 수 있고, 대규모 워크로드에 대해서는 작업(Job) 형태의 비동기 분석을 수행할 수 있다.
+* 텍스트 분석 유형은 다음과 같다:
+
+  * 기본 제공 모델(Built-in): AWS에서 제공하는 기본 모델 사용
+  * 사용자 정의 모델(Custom): 생성해 둔 엔드포인트의 사용자 정의 모델 사용
+
+시험용으로 더 잘 외워지게 핵심만 다시 줄이면 아래처럼 정리할 수 있습니다.
+
+* **Amazon Comprehend = AWS NLP 서비스**
+* **입력은 텍스트/문서, 출력은 엔터티·키프레이즈·언어·감정·PII**
+* **사전 학습 모델 + 커스텀 모델 지원**
+* **소규모는 실시간, 대규모는 비동기 Job 처리**
