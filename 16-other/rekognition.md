@@ -1,7 +1,7 @@
 # AWS Rekognition
 
-- Rekognition is a deep learning based image and video analysis product
-- It can identify objects, people, text, activities, content moderation, face detection, face analysis, face comparison, pathing and much more
-- The product is per as you use per image or per minute in case of video
-- Integrates with application and can be invoked event-driven
-- Can analyse live video streams integrating with Kinesis Video Streams
+* Rekognition은 딥러닝 기반의 이미지 및 비디오 분석 서비스입니다.
+* 객체, 사람, 텍스트, 활동, 콘텐츠 검토, 얼굴 감지, 얼굴 분석, 얼굴 비교, 경로 추적 등 다양한 요소를 식별할 수 있습니다.
+* 과금은 사용량 기반이며, 이미지의 경우 이미지당, 비디오의 경우 분당으로 청구됩니다.
+* 애플리케이션과 통합할 수 있으며, 이벤트 기반으로 호출할 수도 있습니다.
+* Kinesis Video Streams와 연동하여 실시간 비디오 스트림 분석도 가능합니다.
