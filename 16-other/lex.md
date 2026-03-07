@@ -2,25 +2,45 @@
 
 ## Amazon Lex
 
-- Provides text or voice conversational interfaces (Lex for voice, Lex for Alexa)
-- Powers the Alexa service
-- Lex provides 2 main bits of functionality:
-    - Automatic speech recognition (ASR) - speech to text
-    - Natural Language Understanding (NLU) - intent
-- Lex allows us to build voice and text understanding into our applications
-- It scales well, integrates with other AWS services, it is quick to deploy and it has a pay as you go pricing model
-- Use cases:
-    - Chatbots
-    - Voice Assistants
-    - Q&A Bots
-    - Info/Enterprise Bots
+* 텍스트 또는 음성 기반의 **대화형 인터페이스**를 제공하는 서비스
+* **Alexa 서비스를 구동하는 핵심 서비스**
+* Lex는 크게 두 가지 핵심 기능을 제공함
+
+  * **ASR (Automatic Speech Recognition)**: 음성을 텍스트로 변환
+  * **NLU (Natural Language Understanding)**: 사용자의 의도(Intent) 파악
+* Lex를 사용하면 애플리케이션에 **음성 및 텍스트 이해 기능**을 쉽게 추가할 수 있음
+* **확장성이 우수**하고, 다른 AWS 서비스와의 **연동이 쉽고**, **빠르게 배포 가능**하며, **사용량 기반 과금(Pay as you go)** 모델을 사용함
+
+### 사용 사례
+
+* 챗봇
+* 음성 비서
+* Q&A 봇
+* 정보 제공 / 엔터프라이즈 봇
+
+---
 
 ## Amazon Connect
 
-- It is a contact center as a service
-- Requires no infrastructure in on-premises
-- It is omnichannel: voice and chat, incoming and outgoing
-- Integrates with PSTN networks for traditional voice, allowing us to accept incoming calls and make outgoing calls using the traditional cellular phone networks
-- Agents can connect using the internet from anywhere
-- AWS Connect can integrate with other services such as Lambda/Lex for additional intelligence and features
-- It is quick to provision, provides a pay as you go pricing. It is scalable
+* **클라우드 기반 컨택트 센터 서비스(CCaaS, Contact Center as a Service)**
+* 온프레미스 인프라 구축이 필요 없음
+* **옴니채널 지원**
+
+  * 음성
+  * 채팅
+  * 인바운드
+  * 아웃바운드
+* 기존 전화망인 **PSTN 네트워크와 연동**할 수 있어, 일반 전화망을 통한 **수신 및 발신 통화**를 지원함
+* 상담원(Agent)은 인터넷만 연결되어 있으면 **어디서든 접속 가능**
+* Lambda, Lex 등 다른 AWS 서비스와 통합하여 **지능형 기능**과 **추가 기능**을 구현할 수 있음
+* **빠르게 프로비저닝 가능**하고, **사용량 기반 과금** 모델을 제공하며, **확장성이 뛰어남**
+
+---
+
+## 시험 포인트 요약
+
+* **Lex** = 대화형 인터페이스, 챗봇, 음성/텍스트 이해, **ASR + NLU**
+* **Connect** = 클라우드 콜센터 / 컨택트센터, **PSTN 연동**, 인바운드·아웃바운드 지원
+* **Lex + Connect + Lambda** 조합은 시험에서 자주 나오는 패턴
+
+  * 예: 고객이 전화 → Connect가 수신 → Lex가 의도 파악 → Lambda가 백엔드 처리
