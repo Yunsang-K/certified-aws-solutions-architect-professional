@@ -1,9 +1,32 @@
-# AWS Device Farm
+## AWS Device Farm
 
-- Device Farm is service which provides managed Web and Mobile application testing
-- We can test an application on a fleet of real browser and devices
-- Device Farm provides access to real devices: phones, tablets, different languages, sizes and operating systems
-- We can use build in or supported automated testing frameworks from which we can receive reports detailing testing output
-- It also supports remote connection to devices for issue reproduction and testing
-- We can define tests using testing tools such as Explorer (Android), Fuzz (Android, iOS), Web app Tests, Appium, Calabash
-- We can configure which devices we want to use for testing (huge selection is available). We can configure device state, additional apps, radio states, locations, etc.
+* **AWS Device Farm**은 **관리형 웹 및 모바일 애플리케이션 테스트 서비스**입니다.
+* 실제 브라우저와 실제 디바이스 풀(fleet)에서 애플리케이션을 테스트할 수 있습니다.
+* 다양한 **실제 디바이스**를 사용할 수 있습니다.
+
+  * 스마트폰
+  * 태블릿
+  * 다양한 언어 설정
+  * 다양한 화면 크기
+  * 다양한 운영체제
+* AWS Device Farm은 기본 제공되거나 지원되는 자동화 테스트 프레임워크를 사용할 수 있으며, 이를 통해 **테스트 결과 리포트**를 받을 수 있습니다.
+* 또한 디바이스에 **원격으로 접속**하여 문제를 재현하고 테스트할 수 있습니다.
+* 다음과 같은 테스트 도구를 사용해 테스트를 정의할 수 있습니다.
+
+  * **Explorer** (Android)
+  * **Fuzz** (Android, iOS)
+  * **Web App Tests**
+  * **Appium**
+  * **Calabash**
+* 테스트에 사용할 디바이스를 직접 구성할 수 있으며, 매우 다양한 선택지가 제공됩니다.
+* 다음과 같은 디바이스 상태도 설정할 수 있습니다.
+
+  * 디바이스 상태
+  * 추가 앱 설치
+  * 무선 통신 상태
+  * 위치 정보
+  * 기타 환경 설정
+
+### 핵심 정리
+
+AWS Device Farm은 **실제 모바일 디바이스와 브라우저 환경에서 앱을 테스트**할 수 있게 해주는 서비스이며, **자동화 테스트**, **원격 디버깅**, **다양한 환경 재현**이 가능하다는 점이 핵심입니다.
