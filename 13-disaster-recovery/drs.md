@@ -1,9 +1,28 @@
 # AWS Elastic Disaster Recovery (DRS)
 
-- Minimizes downtime and data loss with fast, reliable recovery of on-premises and cloud-based applications using affordable storage, minimal compute, and point-in-time recovery
-- We can increase IT resilience when you use AWS Elastic Disaster Recovery to replicate on-premises or cloud-based applications running on supported operating systems
-- We set up a DRS agent on our source servers to initiate secure data replication
-- Our data is then replicated in a staging area subnet in our AWS account
-- The staging area is designed to reduce costs by using affordable storage and minimal compute
-- AWS Elastic Disaster Recovery automatically converts our servers to boot and run natively on AWS when we launch instances for drills or recovery
-- If we need to recover applications, you can launch recovery instances on AWS within minutes
+* 저렴한 스토리지, 최소한의 컴퓨팅 리소스, 시점 복구(Point-in-Time Recovery)를 활용하여 온프레미스 및 클라우드 기반 애플리케이션을 빠르고 안정적으로 복구함으로써 다운타임과 데이터 손실을 최소화합니다.
+* 지원되는 운영 체제에서 실행되는 온프레미스 또는 클라우드 기반 애플리케이션을 AWS Elastic Disaster Recovery로 복제하면 IT 복원력을 향상시킬 수 있습니다.
+* 소스 서버에 DRS 에이전트를 설치하여 안전한 데이터 복제를 시작합니다.
+* 이후 데이터는 AWS 계정 내의 스테이징 영역 서브넷으로 복제됩니다.
+* 스테이징 영역은 저렴한 스토리지와 최소한의 컴퓨팅 리소스를 사용해 비용을 절감하도록 설계되어 있습니다.
+* AWS Elastic Disaster Recovery는 훈련(Drill) 또는 실제 복구 시 인스턴스를 시작하면 서버를 AWS에서 네이티브로 부팅 및 실행할 수 있도록 자동으로 변환합니다.
+* 애플리케이션 복구가 필요할 경우, 몇 분 안에 AWS에서 복구 인스턴스를 시작할 수 있습니다.
+
+시험용으로 더 자연스럽게 외우기 쉬운 요약본도 정리하면 아래와 같습니다.
+
+## 암기용 요약
+
+* **DRS = 저비용 DR 서비스**
+* **소스 서버에 에이전트 설치**
+* **AWS 스테이징 영역으로 지속 복제**
+* **평소에는 저렴한 스토리지 + 최소 컴퓨팅만 사용**
+* **복구 또는 DR 테스트 시 몇 분 내 EC2로 기동**
+* **다운타임과 데이터 손실 최소화**
+
+## 시험 포인트
+
+* **파일 단위 백업 서비스가 아니라 서버 단위 DR 복제 서비스**
+* **온프레미스와 클라우드 서버 모두 소스로 가능**
+* **스테이징 영역을 사용해서 평상시 비용을 낮춤**
+* **실제 장애 시 AWS에서 빠르게 복구 인스턴스를 띄움**
+* **DR Drill(복구 훈련)** 에도 적합
