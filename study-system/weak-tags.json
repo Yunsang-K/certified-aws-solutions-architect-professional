@@ -1,0 +1,107 @@
+{
+  "SCP vs IAM Policy": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Organizations의 SCP와 계정 내부 IAM Policy의 역할 구분"
+  },
+  "Permission Boundary": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Principal의 최대 권한 제한과 SCP의 차이"
+  },
+  "Management Account SCP Exception": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Management Account는 SCP 영향을 받지 않는다는 점"
+  },
+  "Cross-account Role": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "계정 간 접근 시 AssumeRole 구조"
+  },
+  "Transit Gateway Route Table": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "TGW attachment association과 propagation 구분"
+  },
+  "VPC Peering vs Transit Gateway": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "소수 VPC 1:1 연결과 다수 VPC hub-and-spoke 구분"
+  },
+  "Direct Connect vs VPN": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "전용선, 암호화, 비용, 구축 시간 기준 비교"
+  },
+  "Route 53 Failover": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "DNS 기반 장애 조치와 health check"
+  },
+  "DR RTO/RPO": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Backup and Restore, Pilot Light, Warm Standby, Active/Active 구분"
+  },
+  "Aurora Global Database": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Multi-Region low RPO database 설계"
+  },
+  "DynamoDB Global Tables": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Multi-Region active-active NoSQL 설계"
+  },
+  "DMS vs DataSync": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Database migration과 file/object data transfer 구분"
+  },
+  "SQS vs SNS": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "Queue와 Pub/Sub 구분"
+  },
+  "Step Functions vs EventBridge": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "워크플로 오케스트레이션과 이벤트 라우팅 구분"
+  },
+  "KMS Key Policy vs IAM Policy": {
+    "wrong_count": 0,
+    "review_count": 0,
+    "status": "new",
+    "last_seen_session": null,
+    "notes": "KMS 사용 권한 판단에서 key policy와 IAM policy 관계"
+  }
+}
