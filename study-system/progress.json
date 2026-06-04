@@ -1,25 +1,39 @@
 {
-  "current_session": 1,
-  "last_completed_session": 0,
+  "current_session": 2,
+  "last_completed_session": 1,
   "current_cycle": 1,
   "repo": "Yunsang-K/certified-aws-solutions-architect-professional-korean",
   "mode": "repo_summary_service_comparison_10_questions_mistake_review",
   "current_files": [
-    "01-accounts/organizations.md",
-    "01-accounts/policies.md"
-  ],
-  "completed_files": [],
-  "next_files": [
     "02-identity/identity-center.md",
     "03-networking/vpc.md"
   ],
-  "completed_sessions_since_last_report": 0,
+  "completed_files": [
+    "01-accounts/organizations.md",
+    "01-accounts/policies.md"
+  ],
+  "next_files": [],
+  "completed_sessions_since_last_report": 1,
   "save_interval_sessions": 5,
   "github_save_enabled": true,
   "notion_enabled": true,
   "notion_sessions_data_source": "collection://e0069c45-8c09-45a7-a5c0-9a406f9b6bc9",
   "notion_mistakes_data_source": "collection://1be27bde-2be6-4123-9447-5c3e736e6945",
   "notion_learned_points_data_source": "collection://19d0da16-72ae-4d6b-8852-641bb4d1607d",
-  "last_session_summary": null,
-  "last_updated": "2026-06-02"
+  "last_session_summary": {
+    "session": 1,
+    "date": "2026-06-04",
+    "source_files": [
+      "01-accounts/organizations.md",
+      "01-accounts/policies.md"
+    ],
+    "question_count": 10,
+    "correct": 10,
+    "wrong": 0,
+    "accuracy": 100,
+    "main_weakness": "None",
+    "logged_user_question": "관리형 정책과 인라인정책의 차이",
+    "github_session_file": "study-system/sessions/session-001.md"
+  },
+  "last_updated": "2026-06-04"
 }
