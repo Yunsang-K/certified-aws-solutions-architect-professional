@@ -1,6 +1,6 @@
 {
-  "current_session": 3,
-  "last_completed_session": 2,
+  "current_session": 4,
+  "last_completed_session": 3,
   "current_cycle": 1,
   "repo": "Yunsang-K/certified-aws-solutions-architect-professional-korean",
   "mode": "repo_summary_service_comparison_10_questions_mistake_review",
@@ -9,10 +9,12 @@
     "01-accounts/organizations.md",
     "01-accounts/policies.md",
     "02-identity/identity-center.md",
-    "03-networking/vpc.md"
+    "03-networking/vpc.md",
+    "01-accounts/mfa.md",
+    "01-accounts/iam.md"
   ],
   "next_files": [],
-  "completed_sessions_since_last_report": 2,
+  "completed_sessions_since_last_report": 3,
   "save_interval_sessions": 5,
   "github_save_enabled": true,
   "notion_enabled": true,
@@ -20,26 +22,19 @@
   "notion_mistakes_data_source": "collection://1be27bde-2be6-4123-9447-5c3e736e6945",
   "notion_learned_points_data_source": "collection://19d0da16-72ae-4d6b-8852-641bb4d1607d",
   "last_session_summary": {
-    "session": 2,
-    "date": "2026-06-04",
+    "session": 3,
+    "date": "2026-06-05",
     "source_files": [
-      "02-identity/identity-center.md",
-      "03-networking/vpc.md"
+      "01-accounts/mfa.md",
+      "01-accounts/iam.md"
     ],
     "question_count": 10,
-    "correct": 7,
-    "wrong": 3,
-    "accuracy": 70,
-    "main_weakness": "VPC networking fundamentals: IGW public access conditions, Route Table association rules, IPv6 egress design",
-    "logged_user_questions": [
-      "IAM Identity Center, ID Store, SAML 2.0",
-      "Public/Private and IAM/resource/network policy relationship",
-      "DHCP Option Set meaning and scope",
-      "VPC Router implicit router meaning",
-      "AWS Local Zones purpose and ownership",
-      "HA meaning"
-    ],
-    "github_session_file": "study-system/sessions/session-002.md"
+    "correct": 9,
+    "wrong": 1,
+    "accuracy": 90,
+    "main_weakness": "MFA factor classification",
+    "logged_user_questions": [],
+    "github_session_file": "study-system/sessions/session-003.md"
   },
-  "last_updated": "2026-06-04"
+  "last_updated": "2026-06-05"
 }
