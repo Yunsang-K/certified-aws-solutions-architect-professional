@@ -25,9 +25,13 @@ ChatGPT가 AWS Certified Solutions Architect - Professional(SAP-C02) 학습 세�
 
 1. `study-system/progress.json`을 먼저 확인한다.
 2. `current_files`를 오늘 범위로 삼는다.
-3. `current_files`가 비어 있으면 `study-system/study-plan.md`에서 다음 미완료 파일 1~2개를 고른다.
-4. 해당 GitHub 레포 파일을 실제로 읽는다.
-5. 읽지 않은 파일을 읽었다고 말하지 않는다.
+3. `current_files`가 비어 있으면 반드시 `study-system/study-plan.md`를 확인한다.
+4. `study-system/study-plan.md`의 우선순위 파일 순서에서 `completed_files`에 없는 다음 미완료 파일 1~2개를 오늘 범위로 고른다.
+5. `study-system/study-plan.md`가 존재하지 않거나 읽기 실패한 경우에만 `README.md` 목차를 보조 기준으로 사용한다.
+6. `README.md` 목차 순서만 보고 오늘 범위를 임의로 정하지 않는다.
+7. 해당 GitHub 레포 파일을 실제로 읽는다.
+8. 읽지 않은 파일을 읽었다고 말하지 않는다.
+9. 세션 시작 응답에는 오늘 범위를 정한 기준을 짧게 명시한다. 예: `current_files가 비어 있어 study-plan.md 기준 다음 미완료 파일을 선택함`.
 
 ## 세션 진행 순서
 
